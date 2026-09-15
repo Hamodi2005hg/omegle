@@ -594,19 +594,19 @@ async function recordNsfwViolation(ip, fp, reason = "NSFW / Inappropriate Conten
   
   let banDurationHours = 24;
   let banDurationMs = 24 * 60 * 60 * 1000; // 24 Hours default for 1st offense
-  let arabicTitle = "حظر مؤقت لمدة 24 ساعة (المخالفة الأولى)";
-  let arabicMsg = "رصد نظام المراقبة الذكي (AI NSFW Filter) محتوى أو سلوكاً مخالفاً لمعايير المجتمع. تم تطبيق حظر لمدة 24 ساعة كأول إجراء تأديبي.";
+  let arabicTitle = "Temporary 24-Hour Ban (First Offense)";
+  let arabicMsg = "Our intelligent monitoring system (AI NSFW Filter) detected content or behavior violating community guidelines. A 24-hour temporary ban has been applied.";
 
   if (offenseCount === 2) {
     banDurationHours = 72; // 3 Days for 2nd offense
     banDurationMs = 3 * 24 * 60 * 60 * 1000;
-    arabicTitle = "حظر مؤقت لمدة 3 أيام (تكرار المخالفة الثانية)";
-    arabicMsg = "تم رصد تكرار السلوك المخالف للسياسات. نظراً لتكرار المخالفة، تم فرض حظر مشدد لمدة 3 أيام (72 ساعة).";
+    arabicTitle = "Temporary 3-Day Ban (Second Offense)";
+    arabicMsg = "Repeated behavior violating policies has been detected. A strict 3-day (72 hours) ban has been enforced.";
   } else if (offenseCount >= 3) {
     banDurationHours = 168; // 7 Days / Escalated for 3rd+ offense
     banDurationMs = 7 * 24 * 60 * 60 * 1000;
-    arabicTitle = "حظر مشدد لمدة 7 أيام (المخالفة الثالثة)";
-    arabicMsg = "تم تطبيق حظر مشدد لمدة 7 أيام بسبب تكرار الانتهاكات المتعمدة والإخلال بأمان المجتمع.";
+    arabicTitle = "Strict 7-Day Ban (Third Offense)";
+    arabicMsg = "A strict 7-day ban has been applied due to repeated intentional violations and disruption of community safety.";
   }
 
   const bannedUntilDate = new Date(Date.now() + banDurationMs);
@@ -1477,10 +1477,10 @@ io.on("connection", async (socket) => {
   const banInfo = await checkActiveBan(ip, null);
   if (banInfo.isBanned) {
     const hoursLeft = Math.ceil(banInfo.remainingMs / (1000 * 60 * 60));
-    const tierMsg = banInfo.offenseCount === 2 ? 'المخالفة الثانية (3 أيام)' : banInfo.offenseCount >= 3 ? 'المخالفة المتكررة (7 أيام)' : 'المخالفة الأولى (24 ساعة)';
+    const tierMsg = banInfo.offenseCount === 2 ? 'Second Offense (3 days)' : banInfo.offenseCount >= 3 ? 'Repeated Offense (7 days)' : 'First Offense (24 hours)';
     socket.emit("banned", {
-      message: `أنت محظور حالياً (${tierMsg}). متبقي حوالي ${hoursLeft} ساعة.`,
-      title: "أنت محظور حالياً (Account Banned)",
+      message: `You are currently banned (${tierMsg}). Approximately ${hoursLeft} hours remaining.`,
+      title: "Account Banned",
       offenseCount: banInfo.offenseCount || 1,
       banDurationHours: banInfo.banDurationHours || 24,
       bannedUntil: new Date(banInfo.expiry).toISOString(),
@@ -1497,7 +1497,7 @@ io.on("connection", async (socket) => {
       const { data: bannedC } = await supabase.from('banned_countries').select('code');
       const bannedCountries = (bannedC || []).map(r => r.code);
       if (country && bannedCountries.includes(country)) {
-        socket.emit("country-blocked", { message: "الموقع محظور في بلدك", country });
+        socket.emit("country-blocked", { message: "Access restricted in your region", country });
         return;
       }
     } catch (e) {}
@@ -1513,10 +1513,10 @@ io.on("connection", async (socket) => {
       const fpBanInfo = await checkActiveBan(ip, fingerprint);
       if (fpBanInfo.isBanned) {
         const hoursLeft = Math.ceil(fpBanInfo.remainingMs / (1000 * 60 * 60));
-        const tierMsg = fpBanInfo.offenseCount === 2 ? 'المخالفة الثانية (3 أيام)' : fpBanInfo.offenseCount >= 3 ? 'المخالفة المتكررة (7 أيام)' : 'المخالفة الأولى (24 ساعة)';
+        const tierMsg = fpBanInfo.offenseCount === 2 ? 'Second Offense (3 days)' : fpBanInfo.offenseCount >= 3 ? 'Repeated Offense (7 days)' : 'First Offense (24 hours)';
         socket.emit("banned", {
-          message: `أنت محظور حالياً (${tierMsg}). متبقي حوالي ${hoursLeft} ساعة.`,
-          title: "أنت محظور حالياً (Device Banned)",
+          message: `You are currently banned (${tierMsg}). Approximately ${hoursLeft} hours remaining.`,
+          title: "Device Banned",
           offenseCount: fpBanInfo.offenseCount || 1,
           banDurationHours: fpBanInfo.banDurationHours || 24,
           bannedUntil: new Date(fpBanInfo.expiry).toISOString(),
@@ -1580,7 +1580,7 @@ io.on("connection", async (socket) => {
   
   socket.on("find-partner", async ({ interests } = {}) => {
     if (!checkSocketRateLimit(socket, 'find-partner', 8, 5000)) {
-      socket.emit("waiting", "يرجى الانتظار قليلاً قبل البحث مجدداً...");
+      socket.emit("waiting", "Please wait a moment before searching again...");
       return;
     }
 
@@ -1588,10 +1588,10 @@ io.on("connection", async (socket) => {
     const activeBan = await checkActiveBan(ip, fp);
     if (activeBan.isBanned) {
       const hoursLeft = Math.ceil(activeBan.remainingMs / (1000 * 60 * 60));
-      const tierMsg = activeBan.offenseCount === 2 ? 'المخالفة الثانية (3 أيام)' : activeBan.offenseCount >= 3 ? 'المخالفة المتكررة (7 أيام)' : 'المخالفة الأولى (24 ساعة)';
+      const tierMsg = activeBan.offenseCount === 2 ? 'Second Offense (3 days)' : activeBan.offenseCount >= 3 ? 'Repeated Offense (7 days)' : 'First Offense (24 hours)';
       socket.emit("banned", {
-        message: `أنت محظور حالياً (${tierMsg}). متبقي حوالي ${hoursLeft} ساعة.`,
-        title: "أنت محظور حالياً (Account Banned)",
+        message: `You are currently banned (${tierMsg}). Approximately ${hoursLeft} hours remaining.`,
+        title: "Account Banned",
         offenseCount: activeBan.offenseCount || 1,
         banDurationHours: activeBan.banDurationHours || 24,
         bannedUntil: new Date(activeBan.expiry).toISOString(),
