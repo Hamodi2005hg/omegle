@@ -23,6 +23,14 @@ leoProfanity.add(extraBannedWords);
 const app = express();
 const server = http.createServer(app);
 
+// 301 Redirect for /index.html to / to prevent duplicate content SEO issues
+app.use((req, res, next) => {
+  if (req.path === '/index.html') {
+    return res.redirect(301, '/');
+  }
+  next();
+});
+
 // Protect against Slowloris & starvation attacks
 server.keepAliveTimeout = 65000;
 server.headersTimeout = 66000;
