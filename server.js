@@ -1785,16 +1785,14 @@ io.on("connection", async (socket) => {
     const uFp = userFingerprint.get(socket.id) || 'No Fingerprint';
     const details = payload.details || {};
     
-    console.log("==================================================");
-    console.log(`📡 [NSFW JS DIAGNOSTIC CHECK] - Socket ID: ${socket.id}`);
-    console.log(`🌐 IP: ${uIp} | 🔑 FP: ${uFp}`);
-    console.log("--------------------------------------------------");
-    console.log(`🔞 Porn: ${(details.Porn * 100 || 0).toFixed(2)}%`);
-    console.log(`🍑 Sexy: ${(details.Sexy * 100 || 0).toFixed(2)}%`);
-    console.log(`🎨 Hentai: ${(details.Hentai * 100 || 0).toFixed(2)}%`);
-    console.log(`😊 Neutral: ${(details.Neutral * 100 || 0).toFixed(2)}%`);
-    console.log(`✏️ Drawing: ${(details.Drawing * 100 || 0).toFixed(2)}%`);
-    console.log("==================================================");
+    const pornVal = details.Porn * 100 || 0;
+    const sexyVal = details.Sexy * 100 || 0;
+    const hentaiVal = details.Hentai * 100 || 0;
+    const neutralVal = details.Neutral * 100 || 0;
+    const drawingVal = details.Drawing * 100 || 0;
+
+    // Use console.warn so that the logs are highlighted in yellow on Railway and bypass any level filters!
+    console.warn(`[NSFW-AI-DIAGNOSTIC] Client: ${socket.id} | IP: ${uIp} | FP: ${uFp} => Porn: ${pornVal.toFixed(1)}% | Sexy: ${sexyVal.toFixed(1)}% | Hentai: ${hentaiVal.toFixed(1)}% | Neutral: ${neutralVal.toFixed(1)}% | Drawing: ${drawingVal.toFixed(1)}%`);
   });
 
   // Progressive Tiered NSFW Violation Handler (1st: 24h, 2nd: 3 days, 3rd+: 7 days)

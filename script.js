@@ -1384,11 +1384,8 @@ class ChatApp {
             }
           });
 
-          // Emit log to server logs to show percentages and results
-          checkCount++;
-          if (checkCount % 2 === 0) {
-            this.socket.emit("nsfw-log", { details, predictions });
-          }
+          // Emit log to server logs unconditionally to ensure real-time visibility on Railway
+          this.socket.emit("nsfw-log", { details, predictions });
 
           // Threshold for NSFW violation
           if (pornOrSexyProb >= 0.75) {
