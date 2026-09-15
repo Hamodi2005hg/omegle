@@ -236,6 +236,7 @@ const globalHttpLimiter = rateLimit({
   max: 600, // max 600 requests per IP per 15 min
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { trustProxy: false },
   message: { error: "Too many requests from this IP. Please slow down." }
 });
 
@@ -244,6 +245,7 @@ const contactMessageLimiter = rateLimit({
   max: 6, // max 6 messages per 10 min
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { trustProxy: false },
   message: { error: "Too many contact messages sent. Please wait a few minutes." }
 });
 
@@ -252,6 +254,7 @@ const aiChatHttpLimiter = rateLimit({
   max: 30, // max 30 AI replies per minute
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { trustProxy: false },
   message: { error: "AI chat rate limit exceeded. Please wait a moment." }
 });
 
