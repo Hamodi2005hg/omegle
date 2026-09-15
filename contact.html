@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Us | Omegooo - Support, Safety & Inquiries</title>
+  <meta name="description" content="Get in touch with the Omegooo support and moderation team. Submit inquiries, user feedback, safety reports, or partnership questions 24/7." />
+  <meta name="keywords" content="contact omegooo, omegooo support, omegle alternative contact, omegooo help, report user, random video chat support" />
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+  <link rel="canonical" href="/contact.html" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="/contact.html" />
+  <meta property="og:title" content="Contact Us | Omegooo - Support & Inquiries" />
+  <meta property="og:description" content="Get in touch with the Omegooo support and moderation team. Submit inquiries, user feedback, or safety questions." />
+  <meta property="og:image" content="/logo.svg" />
+  <meta property="og:site_name" content="Omegooo" />
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Contact Us | Omegooo - Support & Safety" />
+  <meta name="twitter:description" content="Contact Omegooo support team for questions, feedback, or assistance." />
+  <meta name="twitter:image" content="/logo.svg" />
+  <meta name="theme-color" content="#FF6600" />
+  <link rel="icon" type="image/svg+xml" href="/logo-icon.svg">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    "name": "Contact Omegooo",
+    "description": "Contact and support page for Omegooo random video chat platform.",
+    "url": "/contact.html",
+    "mainEntity": {
+      "@type": "Organization",
+      "name": "Omegooo",
+      "url": "/",
+      "logo": "/logo.svg",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer support",
+        "email": "support@omegooo.com",
+        "availableLanguage": ["English", "Arabic"]
+      }
+    }
+  }
+  </script>
+  <style>
+    :root {
+      --primary: #FF6600;
+      --primary-hover: #E05500;
+      --blue: #0099FF;
+      --cyan: #00D2FF;
+      --dark: #0F172A;
+      --gray: #64748B;
+      --light-bg: #F8FAFC;
+      --white: #FFFFFF;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+      --shadow-md: 0 10px 30px rgba(0,0,0,0.08);
+      --shadow-lg: 0 20px 40px rgba(255, 102, 0, 0.12);
+      --success: #10B981;
+      --danger: #EF4444;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #F8FAFC;
+      color: #334155;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Header Bar */
+    .header-bar {
+      position: sticky;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 75px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #EEF2F6;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      z-index: 1000;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+    }
+
+    .brand-logo img {
+      height: 44px;
+      object-fit: contain;
+    }
+
+    .header-nav {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .nav-link {
+      color: #475569;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--primary);
+    }
+
+    .nav-btn {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      color: white;
+      padding: 10px 22px;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(255, 102, 0, 0.25);
+      transition: all 0.3s;
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(255, 102, 0, 0.35);
+    }
+
+    /* Hero Section */
+    .contact-hero {
+      background: linear-gradient(135deg, #FFF8F2 0%, #F0F7FF 100%);
+      padding: 70px 20px 60px;
+      text-align: center;
+      border-bottom: 1px solid #EEF2F6;
+    }
+
+    .contact-hero .badge {
+      display: inline-block;
+      background: rgba(255, 102, 0, 0.1);
+      color: var(--primary);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 14px;
+    }
+
+    .contact-hero h1 {
+      font-size: 40px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 14px;
+    }
+
+    .contact-hero h1 span {
+      color: var(--primary);
+    }
+
+    .contact-hero p {
+      font-size: 17px;
+      color: var(--gray);
+      max-width: 620px;
+      margin: 0 auto;
+    }
+
+    /* Main Container */
+    .main-container {
+      max-width: 1060px;
+      margin: -30px auto 70px;
+      padding: 0 20px;
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 32px;
+      position: relative;
+      z-index: 10;
+    }
+
+    /* Contact Form Card */
+    .form-card {
+      background: #FFFFFF;
+      border-radius: 24px;
+      padding: 40px 36px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid #E2E8F0;
+    }
+
+    .form-card h2 {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 8px;
+    }
+
+    .form-card p.subtitle {
+      font-size: 14px;
+      color: var(--gray);
+      margin-bottom: 28px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 13px 16px;
+      border: 2px solid #E2E8F0;
+      border-radius: 12px;
+      font-size: 15px;
+      font-family: inherit;
+      color: #0F172A;
+      background: #F8FAFC;
+      transition: all 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #FFFFFF;
+      box-shadow: 0 0 0 4px rgba(255, 102, 0, 0.12);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 140px;
+      line-height: 1.6;
+    }
+
+    .submit-btn {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      color: white;
+      border: none;
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(255, 102, 0, 0.3);
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 102, 0, 0.4);
+    }
+
+    .submit-btn:disabled {
+      background: #94A3B8;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    .alert {
+      padding: 16px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      margin-bottom: 24px;
+      display: none;
+      line-height: 1.5;
+    }
+
+    .alert-success {
+      background: #ECFDF5;
+      color: #065F46;
+      border: 1px solid #6EE7B7;
+    }
+
+    .alert-error {
+      background: #FEF2F2;
+      color: #991B1B;
+      border: 1px solid #FCA5A5;
+    }
+
+    /* Sidebar Info Cards */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .info-card {
+      background: #FFFFFF;
+      border-radius: 20px;
+      padding: 30px 24px;
+      border: 1px solid #E2E8F0;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .info-card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .info-card p {
+      font-size: 14px;
+      color: var(--gray);
+      line-height: 1.6;
+    }
+
+    .info-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .info-item .icon {
+      font-size: 20px;
+      background: #FFF3EB;
+      color: var(--primary);
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .info-item div h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0F172A;
+      margin-bottom: 2px;
+    }
+
+    .info-item div p {
+      font-size: 13px;
+      color: #64748B;
+    }
+
+    /* Footer */
+    .footer {
+      background: #0F172A;
+      color: #94A3B8;
+      padding: 40px 20px;
+      text-align: center;
+      font-size: 14px;
+      border-top: 1px solid #1E293B;
+    }
+
+    .footer a {
+      color: #CBD5E1;
+      text-decoration: none;
+      margin: 0 8px;
+      transition: color 0.2s;
+    }
+
+    .footer a:hover {
+      color: var(--primary);
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #ffffff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 860px) {
+      .header-bar { padding: 0 20px; }
+      .header-nav { gap: 12px; }
+      .main-container { grid-template-columns: 1fr; margin-top: 20px; }
+      .contact-hero h1 { font-size: 30px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header Navigation -->
+  <header class="header-bar">
+    <a href="/" class="brand-logo">
+      <img src="/logo.svg" alt="Omegooo Logo" onerror="this.src='/logo-icon.svg'">
+    </a>
+    <div class="header-nav">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/about.html" class="nav-link">About Us</a>
+      <a href="/contact.html" class="nav-link active">Contact Us</a>
+      <a href="/blog.html" class="nav-link">Blog</a>
+      <a href="/chat.html" class="nav-btn">Start Chatting</a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="contact-hero">
+    <div class="badge">HELP & SUPPORT</div>
+    <h1>Get in Touch with <span>Omegooo Team</span></h1>
+    <p>Have questions, suggestions, or safety feedback? Fill out the contact form below and our moderation team will review your message promptly.</p>
+  </section>
+
+  <!-- Main Content Grid -->
+  <main class="main-container">
+    
+    <!-- Contact Form -->
+    <div class="form-card">
+      <h2>Send Us a Message</h2>
+      <p class="subtitle">All inquiries go directly to our administration dashboard for quick review.</p>
+
+      <div class="alert alert-success" id="successAlert"></div>
+      <div class="alert alert-error" id="errorAlert"></div>
+
+      <form id="contactForm">
+        <div class="form-group">
+          <label for="contactName">Your Name (Optional)</label>
+          <input type="text" id="contactName" placeholder="e.g. Alex Smith">
+        </div>
+
+        <div class="form-group">
+          <label for="contactEmail">Email Address <span style="color:red;">*</span></label>
+          <input type="email" id="contactEmail" placeholder="name@example.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="contactCategory">Category / Reason</label>
+          <select id="contactCategory">
+            <option value="General Inquiry">💬 General Inquiry / Questions</option>
+            <option value="Safety & Report">🚨 Safety Report / User Violation</option>
+            <option value="Feature Feedback">💡 Feature Request / Improvement</option>
+            <option value="Technical Issue">🛠️ Technical Bug / Connection Issue</option>
+            <option value="Partnership">🤝 Business & Partnership</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="contactSubject">Subject <span style="color:red;">*</span></label>
+          <input type="text" id="contactSubject" placeholder="Brief summary of your message" required>
+        </div>
+
+        <div class="form-group">
+          <label for="contactMessage">Message <span style="color:red;">*</span></label>
+          <textarea id="contactMessage" placeholder="Please describe your question, issue, or feedback in detail..." required></textarea>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">
+          <span class="spinner" id="btnSpinner"></span>
+          <span id="btnText">📨 Send Message to Admin</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Sidebar Cards -->
+    <aside class="sidebar">
+      
+      <div class="info-card">
+        <h3>⚡ Direct Communication</h3>
+        <p>We take community safety and user feedback seriously. Our administrators monitor incoming messages 24/7.</p>
+        
+        <div class="info-item">
+          <div class="icon">⏱️</div>
+          <div>
+            <h4>Response Time</h4>
+            <p>Typically within 12 - 24 hours</p>
+          </div>
+        </div>
+
+        <div class="info-item">
+          <div class="icon">🛡️</div>
+          <div>
+            <h4>Safety Inquiries</h4>
+            <p>High priority handling for abuse reports</p>
+          </div>
+        </div>
+
+        <div class="info-item">
+          <div class="icon">🔐</div>
+          <div>
+            <h4>Privacy Protected</h4>
+            <p>Your email will never be shared or marketed</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-card" style="background: linear-gradient(135deg, #FFF9F5 0%, #FFFFFF 100%); border-color: #FED7AA;">
+        <h3 style="color: #EA580C;">🚨 Urgent Safety Tip</h3>
+        <p style="font-size: 13px; color: #7C2D12;">
+          If you are currently experiencing an inappropriate user in a live video chat, click the <strong>Report</strong> and <strong>Skip</strong> buttons directly inside the chat interface for immediate AI flag registration.
+        </p>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2026 Omegooo. All rights reserved. • <a href="/">Home</a> • <a href="/about.html">About Us</a> • <a href="/contact.html">Contact Us</a> • <a href="/blog.html">Blog</a></p>
+  </footer>
+
+  <script>
+    document.getElementById('contactForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('contactName').value.trim();
+      const email = document.getElementById('contactEmail').value.trim();
+      const category = document.getElementById('contactCategory').value;
+      const subject = document.getElementById('contactSubject').value.trim();
+      const message = document.getElementById('contactMessage').value.trim();
+
+      const successAlert = document.getElementById('successAlert');
+      const errorAlert = document.getElementById('errorAlert');
+      const submitBtn = document.getElementById('submitBtn');
+      const btnSpinner = document.getElementById('btnSpinner');
+      const btnText = document.getElementById('btnText');
+
+      successAlert.style.display = 'none';
+      errorAlert.style.display = 'none';
+
+      if (!email || !subject || !message) {
+        errorAlert.textContent = 'Please fill out all required fields marked with (*).';
+        errorAlert.style.display = 'block';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      btnSpinner.style.display = 'inline-block';
+      btnText.textContent = 'Sending Message...';
+
+      try {
+        const response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, category, subject, message })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.ok) {
+          successAlert.textContent = '🎉 ' + (data.message || 'Your message has been sent successfully! Our admin team has received it.');
+          successAlert.style.display = 'block';
+          document.getElementById('contactForm').reset();
+        } else {
+          errorAlert.textContent = '❌ ' + (data.error || 'Failed to send message. Please try again.');
+          errorAlert.style.display = 'block';
+        }
+      } catch (err) {
+        console.error('Contact error:', err);
+        errorAlert.textContent = '❌ Network error connecting to server. Please try again later.';
+        errorAlert.style.display = 'block';
+      } finally {
+        submitBtn.disabled = false;
+        btnSpinner.style.display = 'none';
+        btnText.textContent = '📨 Send Message to Admin';
+      }
+    });
+  </script>
+
+</body>
+</html>

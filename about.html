@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About Us | Omegooo - Safe, Fast & Free Omegle Alternative</title>
+  <meta name="description" content="Discover Omegooo: the premier global random video chat platform connecting strangers securely with instant WebRTC peer-to-peer technology, interest matching, and 24/7 AI safety moderation." />
+  <meta name="keywords" content="about omegooo, omegle alternative, free stranger chat, anonymous video call, safe cam chat, meet strangers online, omegooo mission" />
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+  <link rel="canonical" href="/about.html" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="/about.html" />
+  <meta property="og:title" content="About Us | Omegooo - The Future of Random Video Chat" />
+  <meta property="og:description" content="Omegooo connects people worldwide instantly with high-speed WebRTC, privacy-first architecture, and advanced AI safety moderation." />
+  <meta property="og:image" content="/logo.svg" />
+  <meta property="og:site_name" content="Omegooo" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="About Us | Omegooo - Safe Omegle Alternative" />
+  <meta name="twitter:description" content="Learn about Omegooo's mission to provide safe, instant, anonymous video chat with strangers across the globe." />
+  <meta name="twitter:image" content="/logo.svg" />
+  <meta name="theme-color" content="#FF6600" />
+  <link rel="icon" type="image/svg+xml" href="/logo-icon.svg">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "name": "About Omegooo",
+    "description": "About Omegooo random video chat platform, its mission, safety architecture, and features.",
+    "url": "/about.html",
+    "mainEntity": {
+      "@type": "Organization",
+      "name": "Omegooo",
+      "url": "/",
+      "logo": "/logo.svg",
+      "description": "Global random video chat platform powered by real-time WebRTC and AI moderation."
+    }
+  }
+  </script>
+  <style>
+    :root {
+      --primary: #FF6600;
+      --primary-hover: #E05500;
+      --blue: #0099FF;
+      --cyan: #00D2FF;
+      --dark: #0F172A;
+      --gray: #64748B;
+      --light-bg: #F8FAFC;
+      --white: #FFFFFF;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+      --shadow-md: 0 10px 30px rgba(0,0,0,0.08);
+      --shadow-lg: 0 20px 40px rgba(255, 102, 0, 0.12);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #FFFFFF;
+      color: #334155;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* Header Bar */
+    .header-bar {
+      position: sticky;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 75px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #EEF2F6;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      z-index: 1000;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+    }
+
+    .brand-logo img {
+      height: 44px;
+      object-fit: contain;
+    }
+
+    .header-nav {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .nav-link {
+      color: #475569;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--primary);
+    }
+
+    .nav-btn {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      color: white;
+      padding: 10px 22px;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(255, 102, 0, 0.25);
+      transition: all 0.3s;
+    }
+
+    .nav-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(255, 102, 0, 0.35);
+    }
+
+    /* Hero Section */
+    .about-hero {
+      background: linear-gradient(135deg, #FFF8F2 0%, #F0F7FF 100%);
+      padding: 80px 20px;
+      text-align: center;
+      border-bottom: 1px solid #F1F5F9;
+    }
+
+    .about-hero .badge {
+      display: inline-block;
+      background: rgba(255, 102, 0, 0.1);
+      color: var(--primary);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+
+    .about-hero h1 {
+      font-size: 44px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 20px;
+      line-height: 1.2;
+    }
+
+    .about-hero h1 span {
+      color: var(--primary);
+    }
+
+    .about-hero p {
+      font-size: 18px;
+      color: var(--gray);
+      max-width: 720px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 70px 20px;
+    }
+
+    /* Grid layout */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 50px;
+      align-items: center;
+      margin-bottom: 80px;
+    }
+
+    .story-content h2 {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 20px;
+      line-height: 1.3;
+    }
+
+    .story-content p {
+      font-size: 16px;
+      color: #475569;
+      margin-bottom: 18px;
+      line-height: 1.8;
+    }
+
+    .story-image {
+      background: linear-gradient(135deg, #FF6600 0%, #0099FF 100%);
+      border-radius: 24px;
+      padding: 6px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .story-image img {
+      width: 100%;
+      height: 380px;
+      object-fit: cover;
+      border-radius: 20px;
+      display: block;
+    }
+
+    /* Core Values / Feature Cards */
+    .section-header {
+      text-align: center;
+      max-width: 650px;
+      margin: 0 auto 50px;
+    }
+
+    .section-header h2 {
+      font-size: 34px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 12px;
+    }
+
+    .section-header p {
+      color: var(--gray);
+      font-size: 16px;
+    }
+
+    .values-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 28px;
+      margin-bottom: 70px;
+    }
+
+    .value-card {
+      background: #FFFFFF;
+      padding: 36px 28px;
+      border-radius: 20px;
+      border: 1px solid #E2E8F0;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+      text-align: left;
+    }
+
+    .value-card:hover {
+      transform: translateY(-8px);
+      border-color: var(--primary);
+      box-shadow: var(--shadow-md);
+    }
+
+    .value-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #FFF3EB 0%, #FFE6D6 100%);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      margin-bottom: 20px;
+    }
+
+    .value-card h3 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 12px;
+    }
+
+    .value-card p {
+      font-size: 14px;
+      color: #64748B;
+      line-height: 1.7;
+    }
+
+    /* Stats Banner */
+    .stats-banner {
+      background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+      color: white;
+      border-radius: 24px;
+      padding: 50px 30px;
+      margin: 40px 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 30px;
+      text-align: center;
+    }
+
+    .stat-box h3 {
+      font-size: 42px;
+      font-weight: 900;
+      color: #FF6600;
+      margin-bottom: 6px;
+    }
+
+    .stat-box p {
+      font-size: 15px;
+      color: #94A3B8;
+      font-weight: 600;
+    }
+
+    /* CTA Banner */
+    .cta-banner {
+      background: linear-gradient(135deg, #FF6600 0%, #FF8800 100%);
+      color: white;
+      border-radius: 24px;
+      padding: 60px 40px;
+      text-align: center;
+      margin-top: 60px;
+      box-shadow: 0 15px 40px rgba(255, 102, 0, 0.3);
+    }
+
+    .cta-banner h2 {
+      font-size: 36px;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+
+    .cta-banner p {
+      font-size: 18px;
+      max-width: 600px;
+      margin: 0 auto 30px;
+      opacity: 0.95;
+    }
+
+    .cta-btn {
+      background: #FFFFFF;
+      color: var(--primary);
+      padding: 16px 44px;
+      border-radius: 30px;
+      font-size: 18px;
+      font-weight: 800;
+      text-decoration: none;
+      display: inline-block;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+      transition: all 0.3s;
+    }
+
+    .cta-btn:hover {
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    /* Footer */
+    .footer {
+      background: #0F172A;
+      color: #94A3B8;
+      padding: 40px 20px;
+      text-align: center;
+      font-size: 14px;
+      border-top: 1px solid #1E293B;
+    }
+
+    .footer a {
+      color: #CBD5E1;
+      text-decoration: none;
+      margin: 0 8px;
+      transition: color 0.2s;
+    }
+
+    .footer a:hover {
+      color: var(--primary);
+    }
+
+    @media (max-width: 768px) {
+      .header-bar { padding: 0 20px; }
+      .header-nav { gap: 12px; }
+      .grid-2 { grid-template-columns: 1fr; gap: 30px; }
+      .about-hero h1 { font-size: 32px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header Navigation -->
+  <header class="header-bar">
+    <a href="/" class="brand-logo">
+      <img src="/logo.svg" alt="Omegooo Logo" onerror="this.src='/logo-icon.svg'">
+    </a>
+    <div class="header-nav">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/about.html" class="nav-link active">About Us</a>
+      <a href="/contact.html" class="nav-link">Contact Us</a>
+      <a href="/blog.html" class="nav-link">Blog</a>
+      <a href="/chat.html" class="nav-btn">Start Chatting</a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="about-hero">
+    <div class="badge">WHO WE ARE</div>
+    <h1>Reimagining Spontaneous <br><span>Human Connection</span></h1>
+    <p>Omegooo was created with a single, clear mission: to bring the magic of serendipitous, random video chatting back to the internet with uncompromised safety, speed, and privacy.</p>
+  </section>
+
+  <!-- Main Content -->
+  <div class="container">
+    <!-- Story Block -->
+    <div class="grid-2">
+      <div class="story-content">
+        <h2>A Modern, Safe Home for Global Conversations</h2>
+        <p>In a hyper-connected digital world, authentic spontaneous human interactions have become increasingly rare. Omegooo bridges distances across continents, enabling millions of users to exchange ideas, cultures, laughs, and stories face-to-face in an instant.</p>
+        <p>Unlike legacy chat websites that were plagued by unwanted content and abandoned safety standards, Omegooo is built on next-generation WebRTC protocols and proprietary AI content moderation designed to protect every user.</p>
+      </div>
+      <div class="story-image">
+        <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&fit=crop&q=70" alt="People connecting worldwide">
+      </div>
+    </div>
+
+    <!-- Core Pillars / Values -->
+    <div class="section-header">
+      <h2>The Core Pillars of Omegooo</h2>
+      <p>Built with purpose, powered by modern technology, and committed to a welcoming environment.</p>
+    </div>
+
+    <div class="values-grid">
+      <div class="value-card">
+        <div class="value-icon">🛡️</div>
+        <h3>AI-Powered Safety</h3>
+        <p>Our real-time neural network filters analyze video streams on-the-fly to detect and prevent inappropriate or explicit content before it reaches your screen.</p>
+      </div>
+
+      <div class="value-card">
+        <div class="value-icon">🔒</div>
+        <h3>Total Anonymity & Privacy</h3>
+        <p>No phone numbers, no email registrations, and zero call recordings. Connections are routed Peer-to-Peer (WebRTC) with zero data archived.</p>
+      </div>
+
+      <div class="value-card">
+        <div class="value-icon">⚡</div>
+        <h3>Instant Sub-Second Matching</h3>
+        <p>Our intelligent matchmaking engine connects you to a live stranger in under 2 seconds based on shared topics and real-time availability.</p>
+      </div>
+
+      <div class="value-card">
+        <div class="value-icon">🌍</div>
+        <h3>Global Cultural Exchange</h3>
+        <p>Meet friendly people from over 190 countries, practice new languages, share musical talents, or simply enjoy a relaxing conversation anytime.</p>
+      </div>
+    </div>
+
+    <!-- Live Platform Stats -->
+    <div class="stats-banner">
+      <div class="stat-box">
+        <h3>&lt; 2s</h3>
+        <p>Average Match Time</p>
+      </div>
+      <div class="stat-box">
+        <h3>190+</h3>
+        <p>Countries Connected</p>
+      </div>
+      <div class="stat-box">
+        <h3>100%</h3>
+        <p>Free & Anonymous</p>
+      </div>
+      <div class="stat-box">
+        <h3>24/7</h3>
+        <p>Active AI Moderation</p>
+      </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="cta-banner">
+      <h2>Ready to Meet Someone New?</h2>
+      <p>No downloads, no sign-ups, and no waiting. Jump into a friendly live video conversation right now!</p>
+      <a href="/chat.html" class="cta-btn">Start Video Chat &rarr;</a>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2026 Omegooo. All rights reserved. • <a href="/">Home</a> • <a href="/about.html">About Us</a> • <a href="/contact.html">Contact Us</a> • <a href="/blog.html">Blog</a></p>
+  </footer>
+
+</body>
+</html>

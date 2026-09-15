@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta name="monetag" content="bf2e01fed11adb68702054bb92e47444">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Omegooo Safety & Culture Blog - Guides, Advice & Tips for Video Chatting</title>
+  <meta name="description" content="Explore expert guides, safety tips, icebreakers, and advice on navigating online video chats, meeting strangers safely, and mastering digital citizenship on Omegooo." />
+  <meta name="keywords" content="omegle blog, random video chat tips, how to talk to strangers, omegle safety guide, online conversation starters, video chat security, omegooo guides" />
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+  <link rel="canonical" href="/blog.html" />
+  <link rel="icon" type="image/svg+xml" href="/logo-icon.svg">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="blog" />
+  <meta property="og:url" content="/blog.html" />
+  <meta property="og:title" content="Omegooo Safety & Connection Blog" />
+  <meta property="og:description" content="Expert guides, tips, and safety insights for modern random video chat and global stranger conversations." />
+  <meta property="og:image" content="/logo.svg" />
+  <meta property="og:site_name" content="Omegooo" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Omegooo Safety & Culture Blog" />
+  <meta name="twitter:description" content="Discover actionable advice and safety guides for talking to strangers online." />
+  <meta name="twitter:image" content="/logo.svg" />
+  <meta name="theme-color" content="#FF6600" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "name": "Omegooo Safety & Connection Blog",
+    "description": "Guides, safety tips, and advice for random video chat users.",
+    "url": "/blog.html",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Omegooo",
+      "logo": "/logo.svg"
+    }
+  }
+  </script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background:#ffffff;
+      color:#333;
+      overflow-x: hidden;
+    }
+    
+    /* ==================== الشعار ==================== */
+    .logo {
+      font-size: 42px;
+      font-weight: bold;
+      color: #ff6600;
+      z-index: 1000;
+      text-shadow: 2px 2px 6px rgba(0,0,0,0.15);
+      user-select: none;
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      direction: ltr;
+      unicode-bidi: embed;
+      cursor: pointer;
+    }
+    .logo span {
+      display: inline-block;
+    }
+    .logo .first-letter {
+      color: #ff6600;
+      position: relative;
+    }
+
+    /* ==================== شريط علوي (Header) ==================== */
+    .header-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 75px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid #eef2f5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      z-index: 1000;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    }
+    .header-nav {
+      display: flex;
+      gap: 20px;
+    }
+    .nav-link {
+      color: #555;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: bold;
+      transition: color 0.2s;
+    }
+    .nav-link:hover {
+      color: #ff6600;
+    }
+
+    /* ==================== Blog Main Layout ==================== */
+    .blog-container {
+      max-width: 1200px;
+      margin: 110px auto 60px;
+      padding: 0 20px;
+    }
+    
+    .blog-header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+    .blog-header h1 {
+      font-size: 44px;
+      color: #111;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+    .blog-header .subtitle {
+      font-size: 18px;
+      color: #666;
+      max-width: 750px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* Search and Filters */
+    .filter-section {
+      background: #fdfdfd;
+      border: 1px solid #eef2f5;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 40px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .search-box-container {
+      position: relative;
+      width: 100%;
+    }
+    .search-input {
+      width: 100%;
+      padding: 14px 20px 14px 50px;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 30px;
+      outline: none;
+      transition: all 0.2s ease;
+      background: #fff;
+    }
+    .search-input:focus {
+      border-color: #ff6600;
+      box-shadow: 0 0 10px rgba(255,102,0,0.1);
+    }
+    .search-icon {
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #888;
+      font-size: 18px;
+    }
+
+    .category-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .category-label {
+      font-weight: bold;
+      font-size: 14px;
+      color: #555;
+      margin-right: 8px;
+    }
+    .filter-btn {
+      background: #f3f5f7;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #555;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .filter-btn:hover {
+      background: #e9ecef;
+      color: #ff6600;
+    }
+    .filter-btn.active {
+      background: #ff6600;
+      color: #fff;
+      box-shadow: 0 4px 10px rgba(255,102,0,0.2);
+    }
+
+    /* Grid layout */
+    .blog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 30px;
+    }
+    
+    .blog-card {
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+      transition: all 0.4s ease;
+      border: 1px solid #eef2f5;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+    }
+    .blog-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(255,102,0,0.12);
+      border-color: #ff6600;
+    }
+    .blog-img-container {
+      position: relative;
+      width: 100%;
+      height: 210px;
+      overflow: hidden;
+      background: #f4f4f4;
+    }
+    .blog-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+    .blog-card:hover .blog-img {
+      transform: scale(1.06);
+    }
+    .blog-badge {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: #ff6600;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .blog-card-content {
+      padding: 24px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .blog-meta-info {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .blog-card-title {
+      font-size: 20px;
+      color: #111;
+      margin-bottom: 12px;
+      font-weight: bold;
+      line-height: 1.4;
+      transition: color 0.2s;
+    }
+    .blog-card:hover .blog-card-title {
+      color: #ff6600;
+    }
+    .blog-card-excerpt {
+      font-size: 14px;
+      color: #555;
+      line-height: 1.6;
+      margin-bottom: 20px;
+      flex: 1;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .blog-read-more {
+      font-size: 14px;
+      color: #ff6600;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* No results message */
+    .no-results {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 20px;
+      background: #fbfbfb;
+      border-radius: 16px;
+      border: 1px dashed #ddd;
+    }
+    .no-results h3 {
+      font-size: 22px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .no-results p {
+      color: #777;
+    }
+
+    /* ==================== Immersive Article Modal ==================== */
+    .blog-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      z-index: 3000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s ease;
+    }
+    .blog-modal-container {
+      background: #ffffff;
+      width: 95%;
+      max-width: 800px;
+      height: 90vh;
+      border-radius: 20px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: slideUp 0.3s ease;
+    }
+    .blog-modal-header {
+      padding: 20px 30px;
+      border-bottom: 1px solid #eef2f5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
+    }
+    .blog-modal-close {
+      font-size: 28px;
+      font-weight: bold;
+      color: #666;
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .blog-modal-close:hover {
+      color: #ff6600;
+    }
+    .blog-modal-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 40px 30px;
+    }
+    .blog-modal-meta {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .blog-modal-title {
+      font-size: 34px;
+      color: #111;
+      font-weight: bold;
+      line-height: 1.3;
+      margin-bottom: 25px;
+    }
+    .blog-modal-hero-img {
+      width: 100%;
+      height: 380px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    .blog-content-body {
+      font-size: 16px;
+      color: #333;
+      line-height: 1.8;
+    }
+    .blog-content-body h2 {
+      font-size: 24px;
+      color: #111;
+      margin: 35px 0 15px;
+      font-weight: bold;
+    }
+    .blog-content-body p {
+      margin-bottom: 20px;
+    }
+    .blog-content-body ul, .blog-content-body ol {
+      margin: 15px 0 25px 25px;
+    }
+    .blog-content-body li {
+      margin-bottom: 10px;
+    }
+    .blog-content-body strong {
+      color: #111;
+    }
+    
+    /* Featured safety promise banner styling */
+    .blog-featured-banner {
+      background: #fdfdfd;
+      border: 1px solid #ff6600;
+      background: #fffcf9;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      margin: 35px 0;
+      font-weight: bold;
+      color: #ff6600;
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .blog-featured-banner span {
+      font-size: 12px;
+      color: #666;
+      font-weight: normal;
+    }
+
+    /* Footer styles */
+    .footer {
+      padding: 30px;
+      background: #111;
+      color: #aaa;
+      text-align: center;
+      font-size: 14px;
+      width: 100%;
+    }
+    .footer a { color: #ff6600; text-decoration: none; margin: 0 10px; }
+
+    /* ==================== مودال السياسات ==================== */
+    .policy-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .policy-modal {
+      background: #ffffff;
+      width: 90%;
+      max-width: 650px;
+      max-height: 80vh;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: slideUp 0.3s ease;
+    }
+    .policy-modal-header {
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .policy-close-btn {
+      background: none;
+      border: none;
+      font-size: 28px;
+      color: #888;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .policy-close-btn:hover {
+      color: #ff6600;
+    }
+    .policy-modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      line-height: 1.6;
+      font-size: 15px;
+      color: #555;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    @media (max-width: 768px) {
+      .header-bar { padding: 0 16px; height: 65px; }
+      .logo { font-size: 32px; }
+      .header-nav { display: none; }
+      .blog-container { margin-top: 95px; }
+      .blog-header h1 { font-size: 32px; }
+      .blog-header .subtitle { font-size: 15px; }
+      .filter-section { padding: 15px; }
+      .blog-modal-hero-img { height: 220px; }
+      .blog-modal-title { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header-bar">
+    <a href="/" style="display: flex; align-items: center; text-decoration: none;">
+      <img src="/logo.svg" alt="Omegooo" style="height: 40px; object-fit: contain;" onerror="this.src='/logo-icon.svg'">
+    </a>
+    <div class="header-nav">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/about.html" class="nav-link">About Us</a>
+      <a href="/contact.html" class="nav-link">Contact Us</a>
+      <a href="#" onclick="openPolicyModal('terms'); return false;" class="nav-link">Terms</a>
+      <a href="#" onclick="openPolicyModal('privacy'); return false;" class="nav-link">Privacy</a>
+      <a href="#" onclick="openPolicyModal('guidelines'); return false;" class="nav-link">Guidelines</a>
+    </div>
+  </header>
+
+  <div class="blog-container">
+    <div class="blog-header">
+      <h1>Omegooo Safety & Connection Hub</h1>
+      <p class="subtitle">Your ultimate guide to safe, positive, and exciting random video chatting experiences around the globe. Stay anonymous, follow best practices, and build great connections.</p>
+    </div>
+
+    <!-- Search & Dynamic Filters -->
+    <div class="filter-section">
+      <div class="search-box-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" class="search-input" placeholder="Search articles by title, keywords or topics..." oninput="handleSearch()">
+      </div>
+      <div class="category-filters">
+        <span class="category-label">Browse Topics:</span>
+        <button class="filter-btn active" onclick="filterCategory('All', this)">All Articles</button>
+        <button class="filter-btn" onclick="filterCategory('Safety', this)">Safety</button>
+        <button class="filter-btn" onclick="filterCategory('Guides', this)">Guides</button>
+        <button class="filter-btn" onclick="filterCategory('Advice', this)">Advice</button>
+        <button class="filter-btn" onclick="filterCategory('Community', this)">Community</button>
+      </div>
+    </div>
+
+    <!-- Blog Grid -->
+    <div class="blog-grid" id="blogGrid">
+      <div style="grid-column: 1/-1; text-align: center; padding: 50px 0; color: #888;">
+        Loading articles...
+      </div>
+    </div>
+  </div>
+
+  <!-- Immersive Blog Article Detail Modal -->
+  <div id="blogArticleModal" class="blog-modal-overlay" style="display: none;">
+    <div class="blog-modal-container">
+      <div class="blog-modal-header">
+        <span style="font-weight: bold; font-size: 14px; color: #ff6600; text-transform: uppercase; letter-spacing: 1px;">Article Reader</span>
+        <button class="blog-modal-close" onclick="closeBlogArticleModal()">&times;</button>
+      </div>
+      <div class="blog-modal-scroll">
+        <div class="blog-modal-meta">
+          <span id="articleCategory" style="background:#ff6600; color:white; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:bold;">Safety</span>
+          <span id="articleReadTime" style="font-size: 13px; color:#666;">5 min read</span>
+          <span style="color:#ccc;">&bull;</span>
+          <span id="articleDate" style="font-size: 13px; color:#666;">Oct 24, 2026</span>
+        </div>
+        <h1 class="blog-modal-title" id="articleTitle">Article Title</h1>
+        <img id="articleHeroImg" class="blog-modal-hero-img" src="" alt="Featured Article Image">
+        
+        <div class="blog-content-body" id="articleBody">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Featured safety guidelines tips banner -->
+        <div class="blog-featured-banner">
+          <div>📢 Omegooo Safety Promise</div>
+          <span>We monitor visual feeds with automatic filters to maintain a clean environment. Tap the 'Report' button instantly if any partner makes you feel uncomfortable.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Policy and guidelines popup modal -->
+  <div id="policyModal" class="policy-modal-overlay" style="display: none;">
+    <div class="policy-modal">
+      <div class="policy-modal-header">
+        <h3 id="policyModalTitle">Title</h3>
+        <button class="policy-close-btn" onclick="closePolicyModal()">&times;</button>
+      </div>
+      <div class="policy-modal-body" id="policyModalBody">
+        <!-- Content gets loaded here -->
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    &copy; 2026 Omegooo • <a href="/">Home</a> • <a href="/about.html">About Us</a> • <a href="/contact.html">Contact Us</a> • <a href="#" onclick="openPolicyModal('terms'); return false;">Terms of Service</a> • <a href="#" onclick="openPolicyModal('privacy'); return false;">Privacy Policy</a> • <a href="#" onclick="openPolicyModal('guidelines'); return false;">Community Guidelines</a>
+  </div>
+
+  <script>
+    let localBlogs = [];
+    let currentCategory = 'All';
+    let searchQuery = '';
+
+    // --- Dynamic API Fetching with lightweight metadata-only endpoint ---
+    async function fetchBlogs() {
+      try {
+        const res = await fetch('/api/blog-list');
+        const data = await res.json();
+        if (data.ok && data.blogs && data.blogs.length > 0) {
+          localBlogs = data.blogs;
+          renderBlogs();
+        } else {
+          loadFallbackBlogs();
+        }
+      } catch (err) {
+        console.warn("Could not load blogs dynamically, falling back to static offline backup:", err);
+        loadFallbackBlogs();
+      }
+    }
+
+    // Static fallback to make sure content is indexed by search engine crawlers even if offline
+    function loadFallbackBlogs() {
+      localBlogs = [
+        {
+          id: "1",
+          title: "How to Safely Meet and Chat with Strangers Online: The Ultimate Guide",
+          slug: "meet-strangers-safely-guide",
+          category: "Safety",
+          meta_description: "Learn the absolute best safety practices, tips, and guidelines for video chatting with strangers online on platforms like Omegooo. Stay 100% anonymous.",
+          keywords: "video chat safety, chat with strangers, meet strangers online, omegooo safety",
+          thumbnail_url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=60",
+          read_time: "5 min read",
+          created_at: new Date().toISOString()
+        },
+        {
+          id: "2",
+          title: "Top 5 Omegle Alternatives in 2026: Why Omegooo Leads the Way",
+          slug: "best-omegle-alternatives",
+          category: "Guides",
+          meta_description: "Looking for the best Omegle alternatives in 2026? Discover why Omegooo is the safest, fastest, and most modern random video chat platform available.",
+          keywords: "omegle alternatives, talk to strangers, free random chat, safe video chat",
+          thumbnail_url: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=800&auto=format&fit=crop&q=60",
+          read_time: "4 min read",
+          created_at: new Date().toISOString()
+        },
+        {
+          id: "3",
+          title: "Confidence Booster: How to Master Video Chats and Overcome Shyness",
+          slug: "overcome-shyness-video-chat",
+          category: "Community",
+          meta_description: "Feeling shy about talking to strangers on video? Follow our science-backed tips to build instant confidence and make amazing global friendships on Omegooo.",
+          keywords: "video chat confidence, overcome shyness, make online friends, conversation tips",
+          thumbnail_url: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&fit=crop&q=60",
+          read_time: "6 min read",
+          created_at: new Date().toISOString()
+        }
+      ];
+      renderBlogs();
+    }
+
+    function renderBlogs() {
+      const grid = document.getElementById('blogGrid');
+      grid.innerHTML = '';
+
+      // Filter localBlogs based on currentCategory and searchQuery
+      const filtered = localBlogs.filter(post => {
+        const matchesCategory = (currentCategory === 'All' || post.category.toLowerCase() === currentCategory.toLowerCase());
+        const searchTarget = (post.title + ' ' + post.meta_description + ' ' + (post.keywords || '')).toLowerCase();
+        const matchesSearch = searchTarget.includes(searchQuery.toLowerCase());
+        return matchesCategory && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="no-results">
+            <h3>No Articles Found</h3>
+            <p>We couldn't find any match for your search "${searchQuery}". Try selecting other topics or resetting the search bar.</p>
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(post => {
+        const card = document.createElement('div');
+        card.className = 'blog-card';
+        card.onclick = () => openBlogArticle(post.slug);
+        card.innerHTML = `
+          <div class="blog-img-container">
+            <span class="blog-badge">${post.category}</span>
+            <img class="blog-img" src="${post.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&auto=format&fit=crop&q=60'}" alt="${post.title}">
+          </div>
+          <div class="blog-card-content">
+            <div class="blog-meta-info">
+              <span>👤 Omegooo Team</span>
+              <span>&bull;</span>
+              <span>${post.read_time}</span>
+            </div>
+            <h3 class="blog-card-title">${post.title}</h3>
+            <p class="blog-card-excerpt">${post.meta_description}</p>
+            <div class="blog-read-more">
+              Read Article &rarr;
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function filterCategory(category, btn) {
+      currentCategory = category;
+      
+      // Update active button state
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      renderBlogs();
+    }
+
+    function handleSearch() {
+      searchQuery = document.getElementById('searchInput').value;
+      renderBlogs();
+    }
+
+    // Dynamic single article reader (fetch body only on demand)
+    window.openBlogArticle = async function(slug) {
+      let post = localBlogs.find(b => b.slug === slug);
+      if (!post) return;
+
+      // If full content is not pre-loaded, pull from backend
+      if (!post.content) {
+        try {
+          // Pre-populate header & metadata first to look instantaneous
+          document.getElementById('articleCategory').textContent = post.category;
+          document.getElementById('articleReadTime').textContent = post.read_time;
+          document.getElementById('articleTitle').textContent = "Loading Article...";
+          document.getElementById('articleHeroImg').src = post.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&auto=format&fit=crop&q=60';
+          document.getElementById('articleBody').innerHTML = "<p style='text-align:center; padding:40px; color: #666;'>Fetching latest content, please wait...</p>";
+          document.getElementById('blogArticleModal').style.display = 'flex';
+          document.body.style.overflow = 'hidden';
+
+          const res = await fetch(`/api/blog-post/${slug}`);
+          const data = await res.json();
+          if (data.ok && data.post) {
+            post = data.post;
+            // Cache content inside local array
+            const idx = localBlogs.findIndex(b => b.slug === slug);
+            if (idx !== -1) {
+              localBlogs[idx] = post;
+            }
+          } else {
+            document.getElementById('articleTitle').textContent = "Error";
+            document.getElementById('articleBody').innerHTML = "<p style='text-align:center; padding:40px; color: #cc0000;'>Could not load article body. Please check your connection.</p>";
+            return;
+          }
+        } catch (err) {
+          console.error("Dynamic blog post load failure:", err);
+          document.getElementById('articleTitle').textContent = "Error";
+          document.getElementById('articleBody').innerHTML = "<p style='text-align:center; padding:40px; color: #cc0000;'>Network error loading article.</p>";
+          return;
+        }
+      }
+
+      document.getElementById('articleCategory').textContent = post.category;
+      document.getElementById('articleReadTime').textContent = post.read_time;
+      document.getElementById('articleTitle').textContent = post.title;
+      document.getElementById('articleHeroImg').src = post.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&auto=format&fit=crop&q=60';
+      document.getElementById('articleBody').innerHTML = post.content;
+      
+      const dateStr = post.created_at ? new Date(post.created_at).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+      }) : 'October 24, 2026';
+      document.getElementById('articleDate').textContent = dateStr;
+
+      // Schema Injection for SEO
+      try {
+        const existing = document.getElementById('dynamic-blog-schema');
+        if (existing) existing.remove();
+
+        const blogSchema = {
+          "@context": "https://schema.org",
+          "@type": "BlogPosting",
+          "headline": post.title,
+          "description": post.meta_description,
+          "image": post.thumbnail_url,
+          "datePublished": post.created_at || new Date().toISOString(),
+          "author": {
+            "@type": "Organization",
+            "name": "Omegooo Security Team"
+          },
+          "publisher": {
+            "@type": "Organization",
+            "name": "Omegooo"
+          }
+        };
+        const script = document.createElement('script');
+        script.id = 'dynamic-blog-schema';
+        script.type = 'application/ld+json';
+        script.text = JSON.stringify(blogSchema);
+        document.head.appendChild(script);
+      } catch(e) {}
+
+      document.getElementById('blogArticleModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    };
+
+    window.closeBlogArticleModal = function() {
+      document.getElementById('blogArticleModal').style.display = 'none';
+      document.body.style.overflow = '';
+    };
+
+    // Close article modal if clicked on overlay background
+    document.getElementById('blogArticleModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('blogArticleModal')) {
+        closeBlogArticleModal();
+      }
+    });
+
+    // Handle deep-linking to read specific blogs directly from url queries (e.g. blog.html?read=slug)
+    function handleDeepLinking() {
+      const params = new URLSearchParams(window.location.search);
+      const readSlug = params.get('read');
+      if (readSlug) {
+        // Wait briefly for blogs to load then trigger open
+        const checkExist = setInterval(() => {
+          if (localBlogs.length > 0) {
+            openBlogArticle(readSlug);
+            clearInterval(checkExist);
+          }
+        }, 100);
+        // Timeout checkExist after 5 seconds to prevent memory leaks
+        setTimeout(() => clearInterval(checkExist), 5000);
+      }
+    }
+
+    // ==================== POLICY MODAL LOGIC ====================
+    window.openPolicyModal = function(type) {
+      let title = "";
+      let bodyHtml = "";
+
+      if (type === 'terms') {
+        title = "Terms of Service";
+        bodyHtml = `
+          <h4>1. Agreement to Terms</h4>
+          <p style="margin-bottom: 12px;">By accessing and using Omegooo, you agree to be bound by these Terms of Service. If you do not agree to all terms, you are prohibited from using the service.</p>
+          <h4>2. Use of Service</h4>
+          <p style="margin-bottom: 12px;">Omegooo provides an anonymous random video chat service. You must be at least 18 years old or have parental/legal guardian consent. You are solely responsible for your interactions on the platform.</p>
+          <h4>3. Prohibited Content</h4>
+          <p style="margin-bottom: 12px;">You are strictly prohibited from broadcasting or sharing pornography, nudity, harassment, violence, hate speech, or spam. Failure to follow these rules will result in an immediate and permanent IP ban.</p>
+          <h4>4. Monitoring & AI Moderation</h4>
+          <p style="margin-bottom: 12px;">We utilize automated NSFW filters and human monitoring to secure the service. By using Omegooo, you acknowledge and agree that your video feed may be scanned for compliance.</p>
+        `;
+      } else if (type === 'privacy') {
+        title = "Privacy Policy";
+        bodyHtml = `
+          <h4>1. Information We Do Not Collect</h4>
+          <p style="margin-bottom: 12px;">We do not ask for or collect names, email addresses, phone numbers, or social security details. Your chats are completely anonymous.</p>
+          <h4>2. Technical and IP Address Handling</h4>
+          <p style="margin-bottom: 12px;">To maintain service safety, prevent abuse, and handle IP restrictions, we may temporarily log your public IP address and connection logs. This data is never sold or shared.</p>
+          <h4>3. Video and Audio Stream Privacy</h4>
+          <p style="margin-bottom: 12px;">All video and audio connections are established directly peer-to-peer (P2P) using WebRTC whenever possible, meaning data flows directly between users. We do not store or record video conversations.</p>
+        `;
+      } else if (type === 'guidelines') {
+        title = "Community Guidelines";
+        bodyHtml = `
+          <h4>1. Be Kind and Respectful</h4>
+          <p style="margin-bottom: 12px;">Treat every person you meet on Omegooo with respect. Bullying, hate speech, and harassment are completely forbidden.</p>
+          <h4>2. Wear Appropriate Clothing</h4>
+          <p style="margin-bottom: 12px;">Keep your camera centered properly and stay clothed. Any form of nudity, sexual behavior, or adult exhibition is immediately flagged and banned.</p>
+          <h4>3. Report Bad Behavior</h4>
+          <p style="margin-bottom: 12px;">If you connect with anyone violating these guidelines, tap the 'Report' button instantly. This secures the platform for everyone.</p>
+        `;
+      }
+
+      document.getElementById('policyModalTitle').textContent = title;
+      document.getElementById('policyModalBody').innerHTML = bodyHtml;
+      document.getElementById('policyModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    };
+
+    window.closePolicyModal = function() {
+      document.getElementById('policyModal').style.display = 'none';
+      document.body.style.overflow = '';
+    };
+
+    // Close policy modal when clicking on overlay background
+    document.getElementById('policyModal').addEventListener('click', (e) => {
+      if (e.target === document.getElementById('policyModal')) {
+        closePolicyModal();
+      }
+    });
+
+    // Initialize Page
+    fetchBlogs();
+    handleDeepLinking();
+  </script>
+</body>
+</html>

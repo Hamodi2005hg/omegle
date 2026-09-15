@@ -1,0 +1,1739 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<title>Admin Panel — Live Dashboard with Database</title>
+<style>
+  :root {
+    --primary: #4b6cb7;
+    --primary-dark: #182848;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --dark: #1e293b;
+    --gray: #64748b;
+    --light-gray: #f1f5f9;
+    --white: #ffffff;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  }
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, var(--light-gray) 0%, #e2e8f0 100%);
+    padding: 20px;
+    min-height: 100vh;
+    color: var(--dark);
+  }
+  h1 {
+    color: var(--primary-dark);
+    margin-bottom: 24px;
+    font-size: 28px;
+    font-weight: 700;
+  }
+  /* Enhanced Tabs */
+  .topbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 24px;
+    background: var(--white);
+    padding: 12px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+  }
+  .tab {
+    padding: 12px 20px;
+    border-radius: 8px;
+    background: var(--light-gray);
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    color: var(--gray);
+    position: relative;
+  }
+  .tab:hover {
+    background: #e2e8f0;
+    transform: translateY(-2px);
+  }
+  .tab.active {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: var(--white);
+    box-shadow: var(--shadow);
+  }
+  .tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid var(--primary-dark);
+  }
+  /* Panels */
+  .panel {
+    background: var(--white);
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .row {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  /* Cards */
+  .card {
+    background: var(--white);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    flex: 1;
+    min-width: 300px;
+    transition: transform 0.3s ease;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+  }
+  .card h3 {
+    color: var(--primary-dark);
+    margin-bottom: 16px;
+    font-size: 18px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--light-gray);
+  }
+  .card h4 {
+    color: var(--primary);
+    margin: 16px 0 12px 0;
+    font-size: 16px;
+  }
+  /* Stats */
+  .stat {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--primary);
+    display: block;
+    margin: 4px 0;
+  }
+  /* Enhanced Country List */
+  #country-list {
+    max-height: 240px;
+    overflow-y: auto;
+    padding: 12px;
+    background: var(--light-gray);
+    border-radius: 8px;
+  }
+  /* Top Countries List - New Design */
+  .top-countries-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: 16px;
+  }
+  .country-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--primary);
+  }
+  .country-item:hover {
+    background: #f8fafc;
+    transform: translateX(4px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  }
+  .country-name {
+    font-weight: 600;
+    color: var(--dark);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .country-flag {
+    font-size: 18px;
+  }
+  .country-count {
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 16px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    min-width: 40px;
+    text-align: center;
+  }
+  .country-rank {
+    background: var(--light-gray);
+    color: var(--gray);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 8px;
+  }
+  #ip-bans, #fp-bans, #reported-list, #visitors-list, #blocked-countries {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 12px;
+    background: var(--light-gray);
+    border-radius: 8px;
+  }
+  /* Buttons */
+  button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    color: var(--white);
+  }
+  button:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+  .unban { background: linear-gradient(135deg, var(--success) 0%, #059669 100%); }
+  .ban { background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%); }
+  .broadcast { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); }
+  .clear { background: linear-gradient(135deg, var(--danger) 0%, #b91c1c 100%); }
+  .export { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+  /* Forms */
+  textarea {
+    width: 100%;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px;
+    font-family: inherit;
+    font-size: 14px;
+    transition: border-color 0.3s;
+  }
+  textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+  /* Country List */
+  .country-list {
+    max-height: 500px;
+    overflow-y: auto;
+  }
+  .country-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    transition: all 0.2s ease;
+  }
+  .country-item:hover {
+    background: #f8fafc;
+    transform: translateX(4px);
+  }
+  .flex {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+  /* Reports */
+  .rep-card {
+    padding: 16px;
+    border-left: 4px solid var(--primary);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    background: var(--light-gray);
+    transition: all 0.3s ease;
+  }
+  .rep-card:hover {
+    box-shadow: var(--shadow);
+    border-left-color: var(--danger);
+  }
+  .rep-card img {
+    border-radius: 8px;
+    border: 2px solid var(--white);
+  }
+  /* Dashboard Grid */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+  }
+  /* Stats Panel */
+  .charts-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+  }
+  /* Enhanced Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .stat-item {
+    background: var(--white);
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    text-align: center;
+    transition: transform 0.3s ease;
+  }
+  .stat-item:hover {
+    transform: translateY(-2px);
+  }
+  .stat-label {
+    font-size: 12px;
+    color: var(--gray);
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--primary);
+  }
+  /* Fixed Chart Container */
+  .chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+  }
+  /* Stats Country List */
+  .stats-country-list {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 12px;
+    background: var(--light-gray);
+    border-radius: 8px;
+  }
+  /* Data Export Section */
+  .export-section {
+    margin-top: 24px;
+    background: var(--white);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+  }
+  .export-options {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+  .export-option {
+    background: var(--light-gray);
+    padding: 12px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+  }
+  .export-option:hover {
+    background: #e2e8f0;
+    border-color: var(--primary);
+  }
+  @media (max-width: 768px) {
+    .row, .charts-container, .dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+    .topbar {
+      overflow-x: auto;
+    }
+    .tab {
+      padding: 10px 14px;
+      font-size: 14px;
+    }
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+    .chart-container {
+      height: 300px;
+    }
+  }
+</style>
+<base target="_blank">
+</head>
+<body>
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+  <div style="display: flex; align-items: center; gap: 16px;">
+    <a href="/" target="_self" title="Go to Homepage">
+      <img src="/logo.svg" alt="Omegooo" style="height: 40px; object-fit: contain;" onerror="this.src='/logo-icon.svg'">
+    </a>
+    <h1 style="margin: 0; font-size: 24px; color: var(--primary-dark);">📊 Live Admin Center</h1>
+  </div>
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <span style="background: #E2E8F0; color: #334155; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700;">
+      🛡️ Rate Limiting: 3 Attempts (Active)
+    </span>
+    <button onclick="logoutAdmin()" style="background: #EF4444; color: white; border: none; padding: 8px 18px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3); transition: all 0.2s;" onmouseover="this.style.background='#DC2626'" onmouseout="this.style.background='#EF4444'">
+      🚪 تسجيل الخروج (Logout)
+    </button>
+  </div>
+</div>
+
+<div class="topbar" id="tabs">
+  <div class="tab active" data-tab="dashboard">📈 Dashboard</div>
+  <div class="tab" data-tab="contact">
+    📩 Contact Messages 
+    <span id="contact-badge" style="background:#EF4444; color:white; font-size:11px; padding:2px 6px; border-radius:10px; margin-left:4px; display:none;">0</span>
+  </div>
+  <div class="tab" data-tab="security">🔒 Security & Rate Limits</div>
+  <div class="tab" data-tab="countries">🌍 Countries</div>
+  <div class="tab" data-tab="stats">📊 Statistics</div>
+  <div class="tab" data-tab="reports">🚨 Reports</div>
+  <div class="tab" data-tab="bans">⚠️ Bans</div>
+  <div class="tab" data-tab="blog">📰 Blog Manager</div>
+  <div class="tab" data-tab="database">🗄️ Database</div>
+</div>
+<div id="content">
+  <!-- Dashboard Panel -->
+  <div class="panel" id="panel-dashboard">
+    <div class="dashboard-grid">
+      <div class="card">
+        <h3>📡 Live Statistics</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-label">Connected Users</div>
+            <span id="stat-connected" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Waiting</div>
+            <span id="stat-waiting" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Paired</div>
+            <span id="stat-partnered" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Total Visitors</div>
+            <span id="stat-totalvisitors" class="stat-value">0</span>
+          </div>
+        </div>
+      
+        <h4>🌐 Top Countries</h4>
+        <div id="country-list" class="top-countries-list"></div>
+      </div>
+      <div class="card">
+        <h3>📢 Broadcast Message</h3>
+        <form id="broadcastForm">
+          <textarea id="broadcastMsg" rows="4" placeholder="Type your message to broadcast to all users..."></textarea><br><br>
+          <button class="broadcast">Send Broadcast</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3>🚫 Active Bans</h3>
+        <h4>IP Bans</h4>
+        <div id="ip-bans" class="small"></div>
+      
+        <h4>Device Bans</h4>
+        <div id="fp-bans" class="small"></div>
+      </div>
+      <div class="card">
+        <h3>🚨 Reported Users</h3>
+        <div id="reported-list" class="small"></div>
+      </div>
+      <div class="card" style="grid-column: 1 / -1;">
+        <h3>👥 Recent Unique Visitors (Last 50 IPs)</h3>
+        <div id="visitors-list" class="small"></div>
+      </div>
+    </div>
+  </div>
+  <!-- Countries Panel -->
+  <div class="panel" id="panel-countries" style="display:none">
+    <h2>🌍 Country Management</h2>
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:24px">
+      <div>
+        <h3>All Countries</h3>
+        <div class="country-list" id="all-countries"></div>
+      </div>
+      <div>
+        <div class="card">
+          <h4>🔒 Blocked Countries</h4>
+          <div id="blocked-countries"></div>
+          <button id="clear-blocks" class="clear" style="width:100%;margin-top:16px">Clear All Blocks</button>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px;background:#fff3cd;padding:12px;border-radius:8px;color:#856404;">
+      💡 الملاحظة: الحظر سيؤدي إلى تعطيل الكاميرا والدردشة وإظهار رسالة "الموقع محظور في بلدك" للمستخدمين من هذه الدول فور اتصالهم.
+    </div>
+  </div>
+  <!-- Stats Panel -->
+  <div class="panel" id="panel-stats" style="display:none">
+    <h2>📊 Visitors Analytics</h2>
+    <div class="charts-container">
+      <div class="card">
+        <h3>Daily Visitors Trend</h3>
+        <div class="chart-container">
+          <canvas id="visitorsChart"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Top Countries</h3>
+        <div id="stats-country-list" class="stats-country-list"></div>
+      
+        <h4 style="margin-top:24px">📅 Date Range</h4>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <label style="display:flex;flex-direction:column;gap:4px">
+            <span class="small">From</span>
+            <input type="date" id="fromDate" style="padding:8px;border:2px solid #e2e8f0;border-radius:6px">
+          </label>
+          <label style="display:flex;flex-direction:column;gap:4px">
+            <span class="small">To</span>
+            <input type="date" id="toDate" style="padding:8px;border:2px solid #e2e8f0;border-radius:6px">
+          </label>
+          <button id="refreshStats" class="broadcast" style="width:100%">Refresh Charts</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Reports Panel -->
+  <div class="panel" id="panel-reports" style="display:none">
+    <h2>🚨 User Reports</h2>
+    <div id="reports-panel"></div>
+  </div>
+  <!-- Bans Panel -->
+  <div class="panel" id="panel-bans" style="display:none">
+    <h2>⚠️ Ban Management</h2>
+    <div id="bans-panel"></div>
+  </div>
+  <!-- Blog Panel -->
+  <div class="panel" id="panel-blog" style="display:none">
+    <h2>📰 Blog Manager (Premium SEO Optimized)</h2>
+    <div style="background:#fff; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+      <h3 style="margin-top:0; color:#333; display:flex; justify-content:space-between; align-items:center;">
+        Create New SEO-Friendly Article
+        <button type="button" onclick="fillSEOArticleTemplate()" style="background:#ff6600; color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:bold; font-size:12px; cursor:pointer;">💡 Auto-Fill SEO Template</button>
+      </h3>
+      <form id="blogForm" onsubmit="createBlogPost(event)">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:12px;">
+          <div>
+            <label style="display:block; font-weight:600; font-size:13px; color:#555; margin-bottom:4px;">Article Title (Google Friendly)</label>
+            <input type="text" id="blogTitle" placeholder="e.g., How to Make Friends on Random Video Chat" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:14px; box-sizing:border-box;" oninput="generateSlug()">
+          </div>
+          <div>
+            <label style="display:block; font-weight:600; font-size:13px; color:#555; margin-bottom:4px;">Custom Slug (URL Path)</label>
+            <input type="text" id="blogSlug" placeholder="e.g., make-friends-video-chat" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:14px; box-sizing:border-box;">
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:12px;">
+          <div>
+            <label style="display:block; font-weight:600; font-size:13px; color:#555; margin-bottom:4px;">Category</label>
+            <select id="blogCategory" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:14px; height:36px; box-sizing:border-box;">
+              <option value="Safety">Safety & Security</option>
+              <option value="Guides">User Guides</option>
+              <option value="Community">Community & Fun</option>
+              <option value="Updates">Platform Updates</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block; font-weight:600; font-size:13px; color:#555; margin-bottom:4px;">Read Time</label>
+            <input type="text" id="blogReadTime" placeholder="e.g., 5 min read" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:14px; box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="display:block; font-weight:600; font-size:13px; color:#555; margin-bottom:4px;">Featured Image URL</label>
+            <input type="url" id="blogThumbnail" placeholder="https://unsplash.com/..." style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:14px; box-sizing:border-box;">
+          </div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block; font-weight:600; font-size:13px; color:#555; margin-bottom:4px;">SEO Meta Description (For Google Search Snippet - Max 160 chars)</label>
+          <input type="text" id="blogMeta" placeholder="Enter a highly engaging search description summary..." required maxlength="160" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:14px; box-sizing:border-box;" oninput="updateMetaCounter()">
+          <span id="metaCounter" style="font-size:11px; color:#666; margin-top:2px; display:block;">0 / 160 characters (Optimal size: 120-155 chars)</span>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block; font-weight:600; font-size:13px; color:#555; margin-bottom:4px;">SEO Keywords (Comma separated)</label>
+          <input type="text" id="blogKeywords" placeholder="e.g., video chat tips, random chat guides, omegooo blog" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:14px; box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="display:block; font-weight:600; font-size:13px; color:#555; margin-bottom:4px;">Article Content (HTML formatting supported: use &lt;h2&gt;, &lt;p&gt;, &lt;ul&gt; for ideal layout structure!)</label>
+          <textarea id="blogContent" rows="10" required placeholder="Write your valuable, high-quality article content here..." style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:14px; font-family:monospace; resize:vertical; box-sizing:border-box;"></textarea>
+        </div>
+        <button type="submit" style="background:#ff6600; color:white; border:none; padding:10px 24px; border-radius:6px; font-weight:bold; font-size:15px; cursor:pointer;">Publish Article Live 🚀</button>
+      </form>
+    </div>
+    
+    <h3>Published Articles</h3>
+    <div id="admin-blog-list" style="display:grid; grid-template-columns:1fr; gap:16px;">
+      <!-- Rendered published posts dynamically -->
+    </div>
+  </div>
+
+  <!-- Database Panel -->
+  <div class="panel" id="panel-database" style="display:none">
+    <h2>🗄️ Database Management</h2>
+    
+    <div class="export-section">
+      <h3>📊 Export Data</h3>
+      <p style="color:var(--gray);margin-bottom:16px;">جميع بيانات الزوار والأحصائيات مخزنة بشكل دائم في قاعدة البيانات ولن تحذف أبداً.</p>
+      
+      <div class="export-options">
+        <div class="export-option" onclick="exportData('visitors')">
+          <div style="font-size:32px;">👥</div>
+          <div style="font-weight:600;">All Visitors Data</div>
+          <div style="font-size:12px;color:var(--gray);">جميع الزوار (IP، الدولة، الوقت)</div>
+        </div>
+        
+        <div class="export-option" onclick="exportData('statistics')">
+          <div style="font-size:32px;">📈</div>
+          <div style="font-weight:600;">Daily Statistics</div>
+          <div style="font-size:12px;color:var(--gray);">الإحصائيات اليومية</div>
+        </div>
+        
+        <div class="export-option" onclick="exportData('bans')">
+          <div style="font-size:32px;">🚫</div>
+          <div style="font-weight:600;">Bans History</div>
+          <div style="font-size:12px;color:var(--gray);">سجل الحظر</div>
+        </div>
+        
+        <div class="export-option" onclick="exportData('reports')">
+          <div style="font-size:32px;">🚨</div>
+          <div style="font-weight:600;">Reports History</div>
+          <div style="font-size:12px;color:var(--gray);">سجل البلاغات</div>
+        </div>
+        
+        <div class="export-option" onclick="exportData('full')">
+          <div style="font-size:32px;">💾</div>
+          <div style="font-weight:600;">Full Database Backup</div>
+          <div style="font-size:12px;color:var(--gray);">نسخة احتياطية كاملة</div>
+        </div>
+      </div>
+      
+      <div style="margin-top:24px;">
+        <button class="export" onclick="exportData('full')" style="padding:12px 24px;font-size:16px;">
+          ⬇️ Download Complete Database Backup
+        </button>
+      </div>
+    </div>
+    
+    <div class="card" style="margin-top:24px;">
+      <h3>📈 Database Statistics</h3>
+      <div id="db-stats" style="padding:16px;background:var(--light-gray);border-radius:8px;">
+        جاري تحميل إحصائيات قاعدة البيانات...
+      </div>
+      <button onclick="loadDatabaseStats()" class="broadcast" style="margin-top:16px;">
+        🔄 Refresh Database Stats
+      </button>
+    </div>
+    
+    <div class="card" style="margin-top:24px;background:#fff3cd;border-color:#f59e0b;">
+      <h3 style="color:#d97706;">⚠️ Important Notice</h3>
+      <p style="color:#92400e;">
+        • جميع بيانات الزوار تخزن بشكل دائم ولا تحذف تلقائياً<br>
+        • يمكنك تصدير البيانات في أي وقت بصيغة JSON<br>
+        • النسخ الاحتياطية تحفظ جميع الإحصائيات والتواريخ<br>
+        • يمكن استيراد البيانات لاحقاً إذا لزم الأمر
+      </p>
+    </div>
+  </div>
+
+  <!-- Contact Messages Panel -->
+  <div class="panel" id="panel-contact" style="display:none">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+      <div>
+        <h2>📩 Contact Us Inquiries (رسائل تواصل معنا)</h2>
+        <p style="color:var(--gray); font-size:14px;">Messages sent by users via the Contact Us page are routed directly here in real-time.</p>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button onclick="loadContactMessages()" class="broadcast" style="padding:10px 18px;">🔄 Refresh Messages</button>
+      </div>
+    </div>
+
+    <div id="contact-messages-container">
+      <div style="text-align:center; padding:40px; color:var(--gray);">Loading messages...</div>
+    </div>
+  </div>
+
+  <!-- Security & Rate Limits Panel -->
+  <div class="panel" id="panel-security" style="display:none">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+      <div>
+        <h2>🔒 Security & Rate Limiting (محاولات تسجيل الدخول والأمان)</h2>
+        <p style="color:var(--gray); font-size:14px;">Rate limiting is strictly enforced: <strong>Maximum 3 failed attempts</strong> per IP with a 15-minute temporary lockout. All attempts are logged in the database.</p>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button onclick="resetAllLockouts()" style="background:#F59E0B; color:white; border:none; padding:10px 18px; border-radius:8px; font-weight:700; cursor:pointer;">
+          🔓 Reset All Lockouts
+        </button>
+        <button onclick="loadLoginAttempts()" class="broadcast" style="padding:10px 18px;">
+          🔄 Refresh Security Logs
+        </button>
+      </div>
+    </div>
+
+    <div class="dashboard-grid" style="margin-bottom:24px;">
+      <div class="card">
+        <h3>🛡️ Policy Status</h3>
+        <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px;">
+          <div style="display:flex; justify-content:space-between; padding:10px; background:var(--light-gray); border-radius:8px;">
+            <span>Max Login Attempts:</span>
+            <strong style="color:var(--danger)">3 Attempts</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:10px; background:var(--light-gray); border-radius:8px;">
+            <span>Lockout Duration:</span>
+            <strong>15 Minutes</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:10px; background:var(--light-gray); border-radius:8px;">
+            <span>Database Logging:</span>
+            <strong style="color:var(--success)">Enabled (Supabase + Local JSON)</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🚫 Currently Locked IPs</h3>
+        <div id="locked-ips-container" style="margin-top:10px;">
+          <div style="color:var(--gray); font-size:14px;">Loading locked IPs...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📜 Recent Login Attempts History (سجل محاولات الدخول)</h3>
+      <div id="login-attempts-table-container" style="overflow-x:auto; margin-top:15px;">
+        <div style="color:var(--gray); font-size:14px; text-align:center; padding:20px;">Loading attempts...</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.socket.io/4.0.0/socket.io.min.js "></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js "></script>
+<script>
+  const socket = io();
+  socket.emit('admin-join');
+  
+  // Tabs
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      const tab = t.dataset.tab;
+      document.querySelectorAll('[id^=panel-]').forEach(p=>p.style.display='none');
+      document.getElementById('panel-' + tab).style.display = 'block';
+      if (tab === 'contact') loadContactMessages();
+      if (tab === 'security') loadLoginAttempts();
+      if (tab === 'countries') loadCountries();
+      if (tab === 'stats') loadStats();
+      if (tab === 'reports') renderReports();
+      if (tab === 'bans') renderBans();
+      if (tab === 'blog') loadBlogs();
+      if (tab === 'database') loadDatabaseStats();
+    };
+  });
+  
+  function renderSnapshot(snap) {
+    document.getElementById('stat-connected').textContent = snap.stats.connected || 0;
+    document.getElementById('stat-waiting').textContent = snap.stats.waiting || 0;
+    document.getElementById('stat-partnered').textContent = snap.stats.partnered || 0;
+    document.getElementById('stat-totalvisitors').textContent = snap.stats.totalVisitors || 0;
+    
+    // Enhanced Countries list with new design
+    const cl = document.getElementById('country-list');
+    cl.innerHTML = '';
+    const entries = Object.entries(snap.stats.countryCounts || {});
+    if (entries.length === 0) {
+      cl.textContent = 'No data';
+    } else {
+      entries.sort((a,b)=>b[1]-a[1]);
+      const topN = 15;
+      const toShow = entries.slice(0, topN);
+    
+      toShow.forEach(([country, cnt], index) => {
+        const d = document.createElement('div');
+        d.className = 'country-item';
+      
+        const rank = document.createElement('span');
+        rank.className = 'country-rank';
+        rank.textContent = `#${index + 1}`;
+      
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'country-name';
+      
+        const flag = document.createElement('span');
+        flag.className = 'country-flag';
+        flag.textContent = getCountryFlag(country);
+      
+        const name = document.createElement('span');
+        name.textContent = country;
+      
+        nameDiv.appendChild(rank);
+        nameDiv.appendChild(flag);
+        nameDiv.appendChild(name);
+      
+        const count = document.createElement('span');
+        count.className = 'country-count';
+        count.textContent = cnt;
+      
+        d.appendChild(nameDiv);
+        d.appendChild(count);
+        cl.appendChild(d);
+      });
+    }
+    
+    // IP Bans
+    const ipb = document.getElementById('ip-bans');
+    ipb.innerHTML = snap.activeIpBans.length ? '' : '<div style="color:var(--gray)">No active IP bans</div>';
+    snap.activeIpBans.forEach(b => {
+      const div = document.createElement('div');
+      div.style.padding = '8px';
+      div.style.marginBottom = '8px';
+      div.style.background = 'rgba(239, 68, 68, 0.1)';
+      div.style.borderRadius = '6px';
+      div.innerHTML = `<b style="color:var(--danger)">${b.ip}</b><br><small>expires: ${new Date(b.expires).toLocaleString()}</small> `;
+      const btn = document.createElement('button');
+      btn.textContent = 'Unban'; btn.className = 'unban';
+      btn.style.padding = '6px 10px';
+      btn.onclick = () => fetch('/unban-ip', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ip:b.ip})});
+      div.appendChild(btn);
+      ipb.appendChild(div);
+    });
+    
+    // Fingerprint Bans
+    const fpb = document.getElementById('fp-bans');
+    fpb.innerHTML = snap.activeFpBans.length ? '' : '<div style="color:var(--gray)">No active device bans</div>';
+    snap.activeFpBans.forEach(b => {
+      const div = document.createElement('div');
+      div.style.padding = '8px';
+      div.style.marginBottom = '8px';
+      div.style.background = 'rgba(239, 68, 68, 0.1)';
+      div.style.borderRadius = '6px';
+      div.innerHTML = `<b style="color:var(--danger)">${b.fp}</b><br><small>expires: ${new Date(b.expires).toLocaleString()}</small> `;
+      const btn = document.createElement('button');
+      btn.textContent = 'Unban'; btn.className = 'unban';
+      btn.style.padding = '6px 10px';
+      btn.onclick = () => fetch('/unban-fingerprint', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({fp:b.fp})});
+      div.appendChild(btn);
+      fpb.appendChild(div);
+    });
+    
+    // Reported Users
+    const rep = document.getElementById('reported-list');
+    rep.innerHTML = snap.reportedUsers.length ? '' : '<div style="color:var(--gray)">No reports</div>';
+    snap.reportedUsers.forEach(r => {
+      const div = document.createElement('div'); div.className = 'rep-card';
+    
+      if (r.screenshot) {
+        const img = document.createElement('img');
+        img.src = r.screenshot; img.className = 'screenshot-thumb';
+        img.style.maxWidth = '160px'; img.style.marginRight = '16px';
+        const showBtn = document.createElement('button');
+        showBtn.textContent = 'View Screenshot';
+        showBtn.style.cssText = 'background:var(--primary);margin-top:8px;padding:6px';
+        showBtn.onclick = () => {
+          const w = window.open("", "_blank");
+          w.document.write(`<meta charset="utf-8"><title>Screenshot</title><img src="${r.screenshot}" style="max-width:100%;display:block;margin:10px auto;">`);
+        };
+        div.appendChild(img); div.appendChild(showBtn);
+      } else div.innerHTML += '<div style="color:var(--gray);margin-bottom:8px">📷 No screenshot</div>';
+    
+      div.innerHTML += `<div style="margin-top:12px"><b>Target:</b> ${r.target}<br><b>Reports:</b> <span style="color:var(--danger)">${r.count}</span></div>`;
+    
+      const small = document.createElement('div'); small.style.cssText = 'font-size:12px;color:var(--gray);margin-top:8px';
+      small.textContent = 'Reporters: ' + (r.reporters.length ? r.reporters.join(', ') : '—');
+      div.appendChild(small);
+      const btnWrap = document.createElement('div'); btnWrap.style.marginTop = '12px'; btnWrap.style.display = 'flex'; btnWrap.style.gap = '8px'; btnWrap.style.alignItems = 'center';
+      
+      const select = document.createElement('select');
+      select.style.cssText = 'padding: 6px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px; font-weight: 600; outline: none; cursor: pointer; height: 34px;';
+      select.innerHTML = `
+        <option value="1d">1 Day</option>
+        <option value="1h">1 Hour</option>
+        <option value="12h">12 Hours</option>
+        <option value="3d">3 Days</option>
+        <option value="7d">7 Days</option>
+        <option value="30d">30 Days</option>
+        <option value="permanent">Permanent</option>
+      `;
+      
+      const banBtn = document.createElement('button'); banBtn.textContent = 'Ban'; banBtn.className = 'ban';
+      banBtn.style.height = '34px';
+      banBtn.onclick = () => {
+        const duration = select.value;
+        const durationLabel = select.options[select.selectedIndex].text;
+        if (!confirm(`Ban user ${r.target} for ${durationLabel}?`)) return;
+        fetch('/manual-ban', {
+          method:'POST', 
+          headers:{'Content-Type':'application/json'}, 
+          body:JSON.stringify({ target: r.target, duration: duration })
+        }).then(()=>{});
+      };
+      
+      const removeBtn = document.createElement('button'); removeBtn.textContent = 'Remove';
+      removeBtn.style.cssText = 'background:var(--gray); height: 34px;';
+      removeBtn.onclick = () => {
+        if (!confirm(`Remove report for user ${r.target}?`)) return;
+        fetch('/remove-report', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ target: r.target })}).then(()=>{});
+      };
+      
+      btnWrap.appendChild(select); btnWrap.appendChild(banBtn); btnWrap.appendChild(removeBtn); div.appendChild(btnWrap);
+      rep.appendChild(div);
+    });
+    
+    // Recent Visitors
+    const vis = document.getElementById('visitors-list');
+    vis.innerHTML = snap.recentVisitors.length ? '' : '<div style="color:var(--gray)">No visitors yet</div>';
+    snap.recentVisitors.forEach(v => {
+      const d = document.createElement('div');
+      d.style.padding = '8px';
+      d.style.borderBottom = '1px solid #e2e8f0';
+      d.innerHTML = `<small style="color:var(--gray)">${new Date(v.ts).toLocaleString()}</small> —
+                     <b>${v.country || 'Unknown'}</b> — ${v.ip}${v.fp ? ' — ' + v.fp.slice(0,8) : ''}`;
+      vis.appendChild(d);
+    });
+    
+    // Blocked Countries
+    const bc = document.getElementById('blocked-countries');
+    bc.innerHTML = snap.bannedCountries.length ? '' : '<div style="color:var(--gray)">No blocked countries</div>';
+    snap.bannedCountries.forEach(c => {
+      const d = document.createElement('div');
+      d.style.padding = '8px'; d.style.marginBottom = '6px';
+      d.style.background = 'rgba(239, 68, 68, 0.1)'; d.style.borderRadius = '6px';
+      d.innerHTML = `<b>${c}</b> — ${COUNTRY_NAME(c)}`;
+      bc.appendChild(d);
+    });
+  }
+  
+  socket.on('connect', () => socket.emit('admin-join'));
+  socket.on('adminUpdate', renderSnapshot);
+  
+  // Broadcast form
+  document.getElementById('broadcastForm').onsubmit = e => {
+    e.preventDefault();
+    const msg = document.getElementById('broadcastMsg').value.trim();
+    if (!msg) return;
+    fetch('/admin-broadcast', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message: msg})}).then(()=>{});
+    document.getElementById('broadcastMsg').value = '';
+  };
+  
+  // Helper function to get country flags
+  function getCountryFlag(countryCode) {
+    const flagMap = {
+      'US': '🇺🇸', 'GB': '🇬🇧', 'FR': '🇫🇷', 'DE': '🇩🇪', 'IT': '🇮🇹', 'ES': '🇪🇸',
+      'CA': '🇨🇦', 'AU': '🇦🇺', 'JP': '🇯🇵', 'KR': '🇰🇷', 'CN': '🇨🇳', 'IN': '🇮🇳',
+      'BR': '🇧🇷', 'RU': '🇷🇺', 'MX': '🇲🇽', 'AR': '🇦🇷', 'ZA': '🇿🇦', 'EG': '🇪🇬',
+      'TR': '🇹🇷', 'IR': '🇮🇷', 'TH': '🇹🇭', 'VN': '🇻🇳', 'PH': '🇵🇭', 'MY': '🇲🇾',
+      'SG': '🇸🇬', 'ID': '🇮🇩', 'BD': '🇧🇩', 'PK': '🇵🇰', 'NG': '🇳🇬', 'KE': '🇰🇪',
+      'SA': '🇸🇦', 'AE': '🇦🇪', 'IL': '🇮🇱', 'UA': '🇺🇦', 'PL': '🇵🇱', 'SE': '🇸🇪',
+      'NO': '🇳🇴', 'DK': '🇩🇰', 'FI': '🇫🇮', 'NL': '🇳🇱', 'BE': '🇧🇪', 'CH': '🇨🇭',
+      'AT': '🇦🇹', 'CZ': '🇨🇿', 'HU': '🇭🇺', 'RO': '🇷🇴', 'BG': '🇧🇬', 'HR': '🇭🇷',
+      'RS': '🇷🇸', 'SK': '🇸🇰', 'SI': '🇸🇮', 'LT': '🇱🇹', 'LV': '🇱🇻', 'EE': '🇪🇪',
+      'IE': '🇮🇪', 'PT': '🇵🇹', 'GR': '🇬🇷', 'CY': '🇨🇾', 'MT': '🇲🇹', 'LU': '🇱🇺'
+    };
+    return flagMap[countryCode] || '🌍';
+  }
+  
+  // Countries
+  const ALL_COUNTRIES = {
+    "AF":"Afghanistan","AL":"Albania","DZ":"Algeria","AS":"American Samoa","AD":"Andorra","AO":"Angola","AI":"Anguilla",
+    "AQ":"Antarctica","AG":"Antigua and Barbuda","AR":"Argentina","AM":"Armenia","AW":"Aruba","AU":"Australia","AT":"Austria",
+    "AZ":"Azerbaijan","BS":"Bahamas","BH":"Bahrain","BD":"Bangladesh","BB":"Barbados","BY":"Belarus","BE":"Belgium","BZ":"Belize",
+    "BJ":"Benin","BM":"Bermuda","BT":"Bhutan","BO":"Bolivia","BA":"Bosnia and Herzegovina","BW":"Botswana","BR":"Brazil",
+    "IO":"British Indian Ocean Territory","VG":"British Virgin Islands","BN":"Brunei","BG":"Bulgaria","BF":"Burkina Faso",
+    "BI":"Burundi","CV":"Cabo Verde","KH":"Cambodia","CM":"Cameroon","CA":"Canada","KY":"Cayman Islands","CF":"Central African Republic",
+    "TD":"Chad","CL":"Chile","CN":"China","CX":"Christmas Island","CC":"Cocos (Keeling) Islands","CO":"Colombia","KM":"Comoros",
+    "CG":"Congo - Brazzaville","CD":"Congo - Kinshasa","CK":"Cook Islands","CR":"Costa Rica","CI":"Côte d'Ivoire","HR":"Croatia",
+    "CU":"Cuba","CW":"Curaçao","CY":"Cyprus","CZ":"Czechia","DK":"Denmark","DJ":"Dijbouti","DM":"Dominica","DO":"Dominican Republic",
+    "EC":"Ecuador","EG":"Egypt","SV":"El Salvador","GQ":"Equatorial Guinea","ER":"Eritrea","EE":"Estonia","ET":"Ethiopia",
+    "FK":"Falkland Islands","FO":"Faroe Islands","FJ":"Fiji","FI":"Finland","FR":"France","GF":"French Guiana","PF":"French Polynesia",
+    "GA":"Gabon","GM":"Gambia","GE":"Georgia","DE":"Germany","GH":"Ghana","GI":"Gibraltar","GR":"Greece","GL":"Greenland","GD":"Grenada",
+    "GP":"Guadeloupe","GU":"Guam","GT":"Guatemala","GG":"Guernsey","GN":"Guinea","GW":"Guinea-Bissau","GY":"Guyana","HT":"Haiti",
+    "HN":"Honduras","HK":"Hong Kong","HU":"Hungary","IS":"Iceland","IN":"India","ID":"Indonesia","IR":"Iran","IQ":"Iraq","IE":"Ireland",
+    "IM":"Isle of Man","IL":"Israel","IT":"Italy","JM":"Jamaica","JP":"Japan","JE":"Jersey","JO":"Jordan","KZ":"Kazakhstan","KE":"Kenya",
+    "KI":"Kiribati","XK":"Kosovo","KW":"Kuwait","KG":"Kyrgyzstan","LA":"Laos","LV":"Latvia","LB":"Lebanon","LS":"Lesotho","LR":"Liberia",
+    "LY":"Libya","LI":"Liechtenstein","LT":"Lithuania","LU":"Luxembourg","MO":"Macao","MK":"North Macedonia","MG":"Madagascar","MW":"Malawi",
+    "MY":"Malaysia","MV":"Maldives","ML":"Mali","MT":"Malta","MH":"Marshall Islands","MQ":"Martinique","MR":"Mauritania","MU":"Mauritius",
+    "YT":"Mayotte","MX":"Mexico","FM":"Micronesia","MD":"Moldova","MC":"Monaco","MN":"Mongolia","ME":"Montenegro","MS":"Montserrat",
+    "MA":"Morocco","MZ":"Mozambique","MM":"Myanmar","NA":"Namibia","NR":"Nauru","NP":"Nepal","NL":"Netherlands","NC":"New Caledonia",
+    "NZ":"New Zealand","NI":"Nicaragua","NE":"Niger","NG":"Nigeria","NU":"Niue","KP":"North Korea","MP":"Northern Mariana Islands","NO":"Norway",
+    "OM":"Oman","PK":"Pakistan","PW":"Palau","PS":"Palestine","PA":"Panama","PG":"Papua New Guinea","PY":"Paraguay","PE":"Peru","PH":"Philippines",
+    "PL":"Poland","PT":"Portugal","PR":"Puerto Rico","QA":"Qatar","RE":"Réunion","RO":"Romania","RU":"Russia","RW":"Rwanda","WS":"Samoa",
+    "SM":"San Marino","ST":"São Tomé & Príncipe","SA":"Saudi Arabia","SN":"Senegal","RS":"Serbia","SC":"Seychelles","SL":"Sierra Leone",
+    "SG":"Singapore","SX":"Sint Maarten","SK":"Slovakia","SI":"Slovenia","SB":"Solomon Islands","SO":"Somalia","ZA":"South Africa","KR":"South Korea",
+    "SS":"South Sudan","ES":"Spain","LK":"Sri Lanka","BL":"St. Barthélemy","SH":"St. Helena","KN":"St. Kitts & Nevis","LC":"St. Lucia","MF":"St. Martin",
+    "PM":"St. Pierre & Miquelon","VC":"St. Vincent & the Grenadines","SD":"Sudan","SR":"Suriname","SJ":"Svalbard & Jan Mayen","SE":"Sweden","CH":"Switzerland",
+    "SY":"Syria","TW":"Taiwan","TJ":"Tajikistan","TZ":"Tanzania","TH":"Thailand","TL":"Timor-Leste","TG":"Togo","TK":"Tokelau","TO":"Tonga",
+    "TT":"Trinidad & Tobago","TN":"Tunisia","TR":"Turkey","TM":"Turkmenistan","TC":"Turks & Caicos Islands","TV":"Tuvalu","UG":"Uganda","UA":"Ukraine",
+    "AE":"United Arab Emirates","GB":"United Kingdom","US":"United States","UY":"Uruguay","UZ":"Uzbekistan","VU":"Vanuatu","VA":"Vatican City",
+    "VE":"Venezuela","VN":"Vietnam","VI":"U.S. Virgin Islands","WF":"Wallis & Futuna","EH":"Western Sahara","YE":"Yemen","ZM":"Zambia","ZW":"Zimbabwe"
+  };
+  
+  function COUNTRY_NAME(code){ return ALL_COUNTRIES[code] || code; }
+  
+  async function loadCountries() {
+    const res = await fetch('/admin/countries-list');
+    const data = await res.json();
+    const banned = new Set(data.banned || []);
+    const container = document.getElementById('all-countries');
+    container.innerHTML = '';
+    const codes = Object.keys(ALL_COUNTRIES).sort((a,b)=>ALL_COUNTRIES[a].localeCompare(ALL_COUNTRIES[b]));
+  
+    codes.forEach(code => {
+      const div = document.createElement('div'); div.className='country-item';
+      const left = document.createElement('div'); left.className='flex';
+      const checkbox = document.createElement('input'); checkbox.type='checkbox'; checkbox.checked = banned.has(code);
+      checkbox.dataset.code = code;
+      const label = document.createElement('div'); label.textContent = code + ' — ' + ALL_COUNTRIES[code];
+      left.appendChild(checkbox); left.appendChild(label);
+    
+      const action = document.createElement('div');
+      const btn = document.createElement('button'); btn.textContent = checkbox.checked ? '🟢 Unblock' : '🔴 Block';
+      btn.style.background = checkbox.checked ? 'var(--success)' : 'var(--danger)'; btn.style.color='#fff';
+      btn.onclick = async () => {
+        const endpoint = checkbox.checked ? '/admin/unblock-country' : '/admin/block-country';
+        await fetch(endpoint, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ code })}).then(()=>{});
+        loadCountries();
+      };
+      action.appendChild(btn);
+      div.appendChild(left); div.appendChild(action);
+      container.appendChild(div);
+    });
+    
+    document.getElementById('clear-blocks').onclick = async () => {
+      if (!confirm('Clear all blocked countries?')) return;
+      await fetch('/admin/clear-blocked', {method:'POST'}).then(()=>{});
+      loadCountries();
+    };
+    
+    const bc = document.getElementById('blocked-countries');
+    bc.innerHTML = data.banned.length ? '' : '<div style="color:var(--gray)">No blocked countries</div>';
+    data.banned.forEach(c => {
+      const d = document.createElement('div');
+      d.style.padding = '8px'; d.style.marginBottom = '6px';
+      d.style.background = 'rgba(239, 68, 68, 0.1)'; d.style.borderRadius = '6px';
+      d.innerHTML = `<b>${c}</b> — ${COUNTRY_NAME(c)}`;
+      bc.appendChild(d);
+    });
+  }
+  
+  // Charts
+  let visitorsChart = null;
+  
+  async function loadStats() {
+    const from = document.getElementById('fromDate').value;
+    const to = document.getElementById('toDate').value;
+    const params = new URLSearchParams();
+    if (from) params.append('from', from);
+    if (to) params.append('to', to);
+  
+    const res = await fetch('/admin/stats-data?' + params.toString());
+    const data = await res.json();
+    
+    // Line chart with fixed container
+    const ctx = document.getElementById('visitorsChart').getContext('2d');
+    const labels = data.daily.map(d=>d.date);
+    const values = data.daily.map(d=>d.count);
+    
+    if (visitorsChart) visitorsChart.destroy();
+    visitorsChart = new Chart(ctx, {
+      type:'line',
+      data:{
+        labels,
+        datasets:[{
+          label:'Daily Visitors',
+          data:values,
+          fill:true,
+          tension:0.4,
+          borderColor:'#4b6cb7',
+          backgroundColor: 'rgba(75, 108, 183, 0.1)',
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          borderWidth: 3,
+          pointBackgroundColor: '#fff',
+          pointBorderColor: '#4b6cb7'
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        scales: {
+          y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.03)' } },
+          x: { grid: { color: 'rgba(0,0,0,0.03)' } }
+        },
+        plugins: {
+          legend: { display: true, position: 'top', labels: { font: { size: 14 } } },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            backgroundColor: 'rgba(30, 41, 59, 0.9)',
+            titleColor: '#fff',
+            bodyColor: '#fff'
+          }
+        }
+      }
+    });
+    
+    // Update country list in stats panel
+    const countryList = document.getElementById('stats-country-list');
+    countryList.innerHTML = '';
+    data.countries.forEach((country, index) => {
+      const div = document.createElement('div');
+      div.className = 'country-item';
+    
+      const rank = document.createElement('span');
+      rank.className = 'country-rank';
+      rank.textContent = `#${index + 1}`;
+    
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'country-name';
+    
+      const flag = document.createElement('span');
+      flag.className = 'country-flag';
+      flag.textContent = getCountryFlag(country.country);
+    
+      const name = document.createElement('span');
+      name.textContent = country.country;
+    
+      nameDiv.appendChild(rank);
+      nameDiv.appendChild(flag);
+      nameDiv.appendChild(name);
+    
+      const count = document.createElement('span');
+      count.className = 'country-count';
+      count.textContent = country.count;
+    
+      div.appendChild(nameDiv);
+      div.appendChild(count);
+      countryList.appendChild(div);
+    });
+  }
+  
+  document.getElementById('refreshStats').onclick = loadStats;
+  
+  // Database functions
+  async function loadDatabaseStats() {
+    try {
+      const res = await fetch('/admin/database-stats');
+      const data = await res.json();
+      
+      const statsDiv = document.getElementById('db-stats');
+      statsDiv.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+          <div class="stat-item">
+            <div class="stat-label">Total Visitors</div>
+            <div class="stat-value">${data.totalVisitors || 0}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Daily Records</div>
+            <div class="stat-value">${data.dailyStats || 0}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Bans History</div>
+            <div class="stat-value">${data.totalBans || 0}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Reports History</div>
+            <div class="stat-value">${data.totalReports || 0}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Database Size</div>
+            <div class="stat-value">${formatBytes(data.dbSize || 0)}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Last Backup</div>
+            <div class="stat-value" style="font-size: 14px;">${data.lastBackup || 'Never'}</div>
+          </div>
+        </div>
+      `;
+    } catch (error) {
+      console.error('Error loading database stats:', error);
+      document.getElementById('db-stats').innerHTML = 
+        '<div style="color: var(--danger);">Error loading database statistics</div>';
+    }
+  }
+  
+  function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  }
+  
+  async function exportData(type) {
+    try {
+      const res = await fetch(`/admin/export-data?type=${type}`);
+      const data = await res.json();
+      
+      // Create download link
+      const jsonString = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      // Set filename based on type and current date
+      const date = new Date().toISOString().split('T')[0];
+      let filename = '';
+      switch(type) {
+        case 'visitors': filename = `visitors-data-${date}.json`; break;
+        case 'statistics': filename = `daily-stats-${date}.json`; break;
+        case 'bans': filename = `bans-history-${date}.json`; break;
+        case 'reports': filename = `reports-history-${date}.json`; break;
+        default: filename = `database-backup-${date}.json`;
+      }
+      
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      alert(`✅ Data exported successfully as ${filename}`);
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      alert('❌ Error exporting data. Please try again.');
+    }
+  }
+  
+  function renderReports(){ /* Handled by adminUpdate */ }
+  function renderBans(){ /* Handled by adminUpdate */ }
+
+  // --- BLOG MANAGER LOGIC ---
+  function generateSlug() {
+    const title = document.getElementById('blogTitle').value;
+    const slug = title.toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // remove invalid chars
+      .replace(/\s+/g, '-')         // collapse whitespace and replace by -
+      .replace(/-+/g, '-');         // collapse dashes
+    document.getElementById('blogSlug').value = slug;
+  }
+
+  function updateMetaCounter() {
+    const val = document.getElementById('blogMeta').value;
+    const counter = document.getElementById('metaCounter');
+    counter.textContent = `${val.length} / 160 characters (Optimal size: 120-155 chars)`;
+    if (val.length >= 120 && val.length <= 155) {
+      counter.style.color = 'green';
+    } else {
+      counter.style.color = '#666';
+    }
+  }
+
+  const seoTemplates = [
+    {
+      title: "How to Safely Meet and Chat with Strangers Online: The Ultimate Guide",
+      slug: "meet-strangers-safely-guide",
+      category: "Safety",
+      meta: "Learn the absolute best safety practices, tips, and guidelines for video chatting with strangers online on platforms like Omegooo. Stay 100% anonymous.",
+      keywords: "video chat safety, chat with strangers, meet strangers online, omegooo safety",
+      readTime: "5 min read",
+      thumbnail: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=60",
+      content: `<h2>1. The Rise of Random Video Chats</h2>
+<p>In recent years, random video chat platforms have revolutionized how we make connections. They offer an instant bridge to people worldwide, allowing for genuine, exciting, and spontaneous conversations.</p>
+
+<h2>2. Why Anonymity is Your Best Shield</h2>
+<p>When you use Omegooo, you are fully anonymous by default. To preserve this level of safety, follow these gold rules:</p>
+<ul>
+  <li><strong>Never reveal personal details:</strong> Do not share your real name, phone number, physical address, or school/work location.</li>
+  <li><strong>Keep social profiles private:</strong> Avoid sharing your Instagram, Snapchat, or Facebook handles with anyone you don't completely trust.</li>
+  <li><strong>Use a VPN if possible:</strong> A Virtual Private Network masks your IP address, adding an extra layer of privacy.</li>
+</ul>
+
+<h2>3. Spotting and Reporting Inappropriate Behavior</h2>
+<p>At Omegooo, we utilize advanced real-time AI tools to monitor and flag unacceptable content. However, human vigilance is irreplaceable. If your partner acts inappropriately or displays offensive material, use the <strong>Report</strong> button immediately. This registers an instant flag on their connection for admin review.</p>
+
+<h2>4. Setting Healthy Boundaries</h2>
+<p>Remember that you are in absolute control of the session. If a conversation becomes uncomfortable, rude, or weird, don't hesitate to click the <strong>Skip</strong> button. Spontaneous chat is meant to be fun and enriching!</p>`
+    },
+    {
+      title: "Top 5 Omegle Alternatives in 2026: Why Omegooo Leads the Way",
+      slug: "best-omegle-alternatives",
+      category: "Guides",
+      meta: "Looking for the best Omegle alternatives in 2026? Discover why Omegooo is the safest, fastest, and most modern random video chat platform available.",
+      keywords: "omegle alternatives, talk to strangers, free random chat, safe video chat",
+      readTime: "4 min read",
+      thumbnail: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=800&auto=format&fit=crop&q=60",
+      content: `<h2>1. The Demise of Legacy Chat Platforms</h2>
+<p>Since the shutdown of the original Omegle, millions of users have been searching for a worthy successor. Many new websites popped up, but they fell short due to lack of safety, or annoying subscription plans.</p>
+
+<h2>2. What Makes a Great Chat Platform?</h2>
+<p>A superior stranger chat platform must excel in three core areas:</p>
+<ol>
+  <li><strong>Speed:</strong> Connecting you to a new partner should take less than 2 seconds.</li>
+  <li><strong>Security:</strong> Strong data protection and active moderating filters to block bad actors.</li>
+  <li><strong>Simplicity:</strong> No tedious signup forms, passwords, or hidden credit card charges.</li>
+</ol>
+
+<h2>3. Why Omegooo is the Best Alternative</h2>
+<p>Omegooo was custom-engineered to solve the flaws of legacy platforms. Here is what we offer:</p>
+<ul>
+  <li><strong>Advanced AI Protection:</strong> Real-time automated NSFW filtering so you don't face shock screens.</li>
+  <li><strong>Interests Matching:</strong> Add up to 5 keywords (like "gaming", "music", "anime") to pair with like-minded partners instantly.</li>
+  <li><strong>High-Quality WebRTC:</strong> Peer-to-Peer direct connection ensures crisp, crystal-clear video and audio stream with minimal latency.</li>
+</ul>
+
+<h2>4. Get Started Instantly</h2>
+<p>There's absolutely nothing to download or install. Just visit our homepage, add your interests, click "Video chat", and you're immediately connected to the world!</p>`
+    },
+    {
+      title: "Confidence Booster: How to Master Video Chats and Overcome Shyness",
+      slug: "overcome-shyness-video-chat",
+      category: "Community",
+      meta: "Feeling shy about talking to strangers on video? Follow our science-backed tips to build instant confidence and make amazing global friendships on Omegooo.",
+      keywords: "video chat confidence, overcome shyness, make online friends, conversation tips",
+      readTime: "6 min read",
+      thumbnail: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&fit=crop&q=60",
+      content: `<h2>1. The Fear of the Unknown</h2>
+<p>It is perfectly normal to feel a brief wave of anxiety or shyness before clicking "Start Chatting". Initiating a face-to-face talk with a stranger pushes us slightly out of our comfort zone.</p>
+
+<h2>2. 3 Golden Icebreakers to Start Strong</h2>
+<p>The first 5 seconds of any random chat dictate the tone. Try these simple, fail-proof opening lines:</p>
+<ul>
+  <li><em>"Hey there! Where in the world are you tuning in from today?"</em> (Classic, warm, and opens up conversation about countries).</li>
+  <li><em>"Hi! I'm currently listening to [Artist Name]. What is your favorite song right now?"</em></li>
+  <li><em>"Spontaneous question: If you could have any superpower for 24 hours, what would it be?"</em> (Fun and high-energy!).</li>
+</ul>
+
+<h2>3. Body Language and Environment</h2>
+<p>Your non-verbal communication speaks volumes before you even say a word. To look confident and inviting:</p>
+<ul>
+  <li><strong>Good lighting:</strong> Place a lamp in front of you, not behind, so your face is clearly visible.</li>
+  <li><strong>Eye contact:</strong> Look directly at your camera lens occasionally, not just at the screen.</li>
+  <li><strong>Smile:</strong> A simple, natural smile acts as an instant universal green light.</li>
+</ul>
+
+<h2>4. The Power of "Next"</h2>
+<p>One of the greatest features of Omegooo is the <strong>Skip</strong> button. If a connection feels awkward, quiet, or unengaging, remember there are thousands of other friendly users waiting. Just tap "Skip" and move on to your next awesome encounter!</p>`
+    }
+  ];
+
+  let currentTemplateIndex = 0;
+  function fillSEOArticleTemplate() {
+    const template = seoTemplates[currentTemplateIndex];
+    document.getElementById('blogTitle').value = template.title;
+    document.getElementById('blogSlug').value = template.slug;
+    document.getElementById('blogCategory').value = template.category;
+    document.getElementById('blogMeta').value = template.meta;
+    document.getElementById('blogKeywords').value = template.keywords;
+    document.getElementById('blogReadTime').value = template.readTime;
+    document.getElementById('blogThumbnail').value = template.thumbnail;
+    document.getElementById('blogContent').value = template.content;
+    
+    updateMetaCounter();
+    
+    // Cycle to next template
+    currentTemplateIndex = (currentTemplateIndex + 1) % seoTemplates.length;
+    alert(`💡 SEO Template filled! Check the content and modify if desired before publishing.`);
+  }
+
+  async function loadBlogs() {
+    try {
+      const res = await fetch('/api/blog');
+      const data = await res.json();
+      if (data.ok) {
+        renderAdminBlogs(data.blogs);
+      }
+    } catch (err) {
+      console.error("Error loading blogs:", err);
+    }
+  }
+
+  function renderAdminBlogs(blogs) {
+    const container = document.getElementById('admin-blog-list');
+    container.innerHTML = '';
+    if (!blogs || blogs.length === 0) {
+      container.innerHTML = '<div style="background:#fff; padding:16px; border-radius:8px; text-align:center; color:#666;">No articles published yet. Use the form above to add your first article!</div>';
+      return;
+    }
+    blogs.forEach(post => {
+      const card = document.createElement('div');
+      card.style.cssText = 'background:#fff; border-radius:10px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,0.05); display:flex; gap:16px; align-items:center;';
+      card.innerHTML = `
+        <img src="${post.thumbnail_url || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=100&auto=format&fit=crop&q=60'}" style="width:70px; height:70px; object-fit:cover; border-radius:8px; background:#f4f4f4;">
+        <div style="flex:1;">
+          <h4 style="margin:0 0 4px 0; font-size:15px; color:#111;">${post.title}</h4>
+          <div style="font-size:12px; color:#666; margin-bottom:4px;">
+            <span style="background:#f4f4f4; padding:2px 6px; border-radius:4px; font-weight:600;">${post.category}</span> &bull; 
+            <span>${post.read_time}</span> &bull; 
+            <span>Slug: <strong style="color:#007bff;">${post.slug}</strong></span>
+          </div>
+          <p style="margin:0; font-size:12px; color:#888; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical;">${post.meta_description}</p>
+        </div>
+        <button onclick="deleteBlogPost('${post.id}')" style="background:#dc3545; color:white; border:none; padding:6px 12px; border-radius:4px; font-size:12px; font-weight:bold; cursor:pointer;">Delete</button>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  async function createBlogPost(event) {
+    event.preventDefault();
+    const title = document.getElementById('blogTitle').value;
+    const slug = document.getElementById('blogSlug').value;
+    const category = document.getElementById('blogCategory').value;
+    const read_time = document.getElementById('blogReadTime').value;
+    const thumbnail_url = document.getElementById('blogThumbnail').value;
+    const meta_description = document.getElementById('blogMeta').value;
+    const keywords = document.getElementById('blogKeywords').value;
+    const content = document.getElementById('blogContent').value;
+
+    try {
+      const res = await fetch('/api/blog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, slug, category, read_time, thumbnail_url, meta_description, keywords, content })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        alert("🎉 Article published successfully! It is now instantly live on the main website.");
+        document.getElementById('blogForm').reset();
+        document.getElementById('metaCounter').textContent = "0 / 160 characters (Optimal size: 120-155 chars)";
+        renderAdminBlogs(data.blogs);
+      } else {
+        alert("❌ Failed to publish article: " + data.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("❌ Error publishing article: " + err.message);
+    }
+  }
+
+  async function deleteBlogPost(id) {
+    if (!confirm("⚠️ Are you sure you want to permanently delete this article from both database and local JSON?")) return;
+    try {
+      const res = await fetch(`/api/blog/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.ok) {
+        alert("✅ Article deleted successfully.");
+        renderAdminBlogs(data.blogs);
+      } else {
+        alert("❌ Failed to delete article: " + data.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("❌ Error deleting article: " + err.message);
+    }
+  }
+
+  // ==========================================
+  // ====== CONTACT MESSAGES LOGIC ============
+  // ==========================================
+  async function loadContactMessages() {
+    const container = document.getElementById('contact-messages-container');
+    try {
+      const res = await fetch('/admin/contact-messages');
+      if (res.status === 401) {
+        window.location.href = '/admin-login.html';
+        return;
+      }
+      const data = await res.json();
+      if (data.ok) {
+        renderContactMessages(data.messages || []);
+      }
+    } catch (err) {
+      console.error("Error loading contact messages:", err);
+      container.innerHTML = '<div style="color:var(--danger); padding:20px;">Failed to load messages from server.</div>';
+    }
+  }
+
+  function renderContactMessages(messages) {
+    const container = document.getElementById('contact-messages-container');
+    const badge = document.getElementById('contact-badge');
+    
+    const unreadCount = messages.filter(m => !m.read).length;
+    if (unreadCount > 0) {
+      badge.textContent = unreadCount;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+
+    if (!messages || messages.length === 0) {
+      container.innerHTML = `
+        <div style="background:var(--white); padding:40px; border-radius:12px; text-align:center; box-shadow:var(--shadow);">
+          <div style="font-size:36px; margin-bottom:10px;">📭</div>
+          <h3 style="color:var(--gray);">No messages received yet</h3>
+          <p style="font-size:14px; color:#94A3B8; margin-top:6px;">Inquiries submitted via the Contact Us page will appear here instantly.</p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = '';
+    messages.forEach(msg => {
+      const card = document.createElement('div');
+      card.style.cssText = `
+        background: ${msg.read ? 'var(--white)' : '#FFFBF5'};
+        border-right: 5px solid ${msg.read ? '#CBD5E1' : '#FF6600'};
+        border-radius: 12px;
+        padding: 22px;
+        margin-bottom: 16px;
+        box-shadow: var(--shadow);
+        transition: all 0.2s;
+        border: 1px solid ${msg.read ? '#E2E8F0' : '#FED7AA'};
+      `;
+
+      const dateStr = msg.created_at ? new Date(msg.created_at).toLocaleString() : 'Recent';
+
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+          <div>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+              <strong style="font-size:17px; color:var(--dark);">${escapeHtml(msg.name || 'Anonymous User')}</strong>
+              <span style="background:rgba(255,102,0,0.12); color:#C2410C; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:700;">${escapeHtml(msg.category || 'General')}</span>
+              ${!msg.read ? '<span style="background:#EF4444; color:white; font-size:11px; padding:2px 8px; border-radius:10px; font-weight:700;">NEW / غير مقروء</span>' : ''}
+            </div>
+            <div style="font-size:13px; color:var(--gray); display:flex; gap:14px; flex-wrap:wrap;">
+              <span>📧 <a href="mailto:${escapeHtml(msg.email)}" style="color:var(--primary); text-decoration:none; font-weight:600;">${escapeHtml(msg.email)}</a></span>
+              <span>🕒 ${dateStr}</span>
+              <span>🌐 IP: <code>${escapeHtml(msg.ip || 'Unknown')}</code></span>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <a href="mailto:${escapeHtml(msg.email)}?subject=Re: ${encodeURIComponent(msg.subject)}" style="background:#0099FF; color:white; text-decoration:none; padding:6px 14px; border-radius:6px; font-size:13px; font-weight:600; display:inline-flex; align-items:center; gap:4px;">
+              ↩️ Reply
+            </a>
+            <button onclick="toggleMessageRead('${msg.id}', ${!msg.read})" style="background:${msg.read ? '#64748B' : '#10B981'}; color:white; border:none; padding:6px 12px; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer;">
+              ${msg.read ? 'Mark Unread' : '✓ Mark Read'}
+            </button>
+            <button onclick="deleteContactMessage('${msg.id}')" style="background:#EF4444; color:white; border:none; padding:6px 12px; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer;">
+              🗑️ Delete
+            </button>
+          </div>
+        </div>
+        
+        <div style="margin-top:14px; padding-top:12px; border-top:1px solid #E2E8F0;">
+          <h4 style="margin:0 0 8px 0; color:#0F172A; font-size:15px;">📌 الموضوع: ${escapeHtml(msg.subject)}</h4>
+          <div style="background:#F8FAFC; padding:14px; border-radius:8px; font-size:14px; color:#334155; line-height:1.7; white-space:pre-wrap; border:1px solid #EEF2F6;">${escapeHtml(msg.message)}</div>
+        </div>
+      `;
+
+      container.appendChild(card);
+    });
+  }
+
+  async function toggleMessageRead(id, readStatus) {
+    try {
+      const res = await fetch('/admin/contact-messages/mark-read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, read: readStatus })
+      });
+      if (res.ok) {
+        loadContactMessages();
+      }
+    } catch (err) {
+      console.error("Error updating read status:", err);
+    }
+  }
+
+  async function deleteContactMessage(id) {
+    if (!confirm("Are you sure you want to permanently delete this message?")) return;
+    try {
+      const res = await fetch(`/admin/contact-messages/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        loadContactMessages();
+      }
+    } catch (err) {
+      console.error("Error deleting message:", err);
+    }
+  }
+
+  // ==========================================
+  // ====== SECURITY & RATE LIMITING LOGIC ====
+  // ==========================================
+  async function loadLoginAttempts() {
+    const lockedContainer = document.getElementById('locked-ips-container');
+    const tableContainer = document.getElementById('login-attempts-table-container');
+
+    try {
+      const res = await fetch('/admin/login-attempts');
+      if (res.status === 401) {
+        window.location.href = '/admin-login.html';
+        return;
+      }
+      const data = await res.json();
+      
+      // Render locked IPs
+      if (!data.lockedIPs || data.lockedIPs.length === 0) {
+        lockedContainer.innerHTML = '<div style="color:var(--success); font-weight:600; padding:10px; background:rgba(16,185,129,0.1); border-radius:8px;">✅ No currently locked IPs (All clear)</div>';
+      } else {
+        lockedContainer.innerHTML = '';
+        data.lockedIPs.forEach(item => {
+          const div = document.createElement('div');
+          div.style.cssText = 'padding:10px; margin-bottom:8px; background:#FEE2E2; border-radius:8px; display:flex; justify-content:space-between; align-items:center;';
+          div.innerHTML = `
+            <div>
+              <b style="color:var(--danger)">🔒 ${item.ip}</b><br>
+              <small style="color:#991B1B">Locked for: ~${item.remainingMinutes} more minutes (${item.count} failed attempts)</small>
+            </div>
+            <button onclick="resetIPLockout('${item.ip}')" style="background:#10B981; color:white; border:none; padding:6px 12px; border-radius:6px; font-weight:bold; cursor:pointer;">
+              🔓 Unlock IP
+            </button>
+          `;
+          lockedContainer.appendChild(div);
+        });
+      }
+
+      // Render attempts history table
+      const attempts = data.attempts || [];
+      if (attempts.length === 0) {
+        tableContainer.innerHTML = '<div style="text-align:center; color:var(--gray); padding:20px;">No login attempts recorded yet.</div>';
+        return;
+      }
+
+      let tableHtml = `
+        <table style="width:100%; border-collapse:collapse; text-align:left; font-size:13px;">
+          <thead>
+            <tr style="background:var(--light-gray); border-bottom:2px solid #CBD5E1;">
+              <th style="padding:10px;">Status</th>
+              <th style="padding:10px;">IP Address</th>
+              <th style="padding:10px;">Timestamp</th>
+              <th style="padding:10px;">Details / Lockout Reason</th>
+              <th style="padding:10px;">User Agent</th>
+              <th style="padding:10px;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      attempts.forEach(att => {
+        const isSuccess = att.success === true;
+        const statusBadge = isSuccess 
+          ? '<span style="background:#ECFDF5; color:#065F46; padding:3px 8px; border-radius:12px; font-weight:bold;">✅ SUCCESS</span>'
+          : '<span style="background:#FEF2F2; color:#991B1B; padding:3px 8px; border-radius:12px; font-weight:bold;">❌ FAILED</span>';
+
+        const timeStr = att.timestamp ? new Date(att.timestamp).toLocaleString() : 'N/A';
+
+        tableHtml += `
+          <tr style="border-bottom:1px solid #E2E8F0;">
+            <td style="padding:10px;">${statusBadge}</td>
+            <td style="padding:10px; font-weight:600;"><code>${escapeHtml(att.ip || 'Unknown')}</code></td>
+            <td style="padding:10px; color:var(--gray);">${timeStr}</td>
+            <td style="padding:10px; font-weight:600; color:${isSuccess ? '#059669' : '#DC2626'}">${escapeHtml(att.status || (isSuccess ? 'Login OK' : 'Failed attempt'))}</td>
+            <td style="padding:10px; color:#64748B; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(att.user_agent || '')}">${escapeHtml(att.user_agent || 'Unknown')}</td>
+            <td style="padding:10px;">
+              <button onclick="resetIPLockout('${att.ip}')" style="background:#64748B; color:white; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer;">
+                Reset IP
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tableHtml += '</tbody></table>';
+      tableContainer.innerHTML = tableHtml;
+
+    } catch (err) {
+      console.error("Error loading security attempts:", err);
+      tableContainer.innerHTML = '<div style="color:var(--danger); padding:15px;">Failed to load security logs.</div>';
+    }
+  }
+
+  async function resetIPLockout(ip) {
+    if (!ip) return;
+    try {
+      const res = await fetch('/admin/reset-login-attempts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ip })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        alert(`✅ Rate limits and lockouts cleared for IP: ${ip}`);
+        loadLoginAttempts();
+      }
+    } catch (err) {
+      alert("Error resetting IP lockout: " + err.message);
+    }
+  }
+
+  async function resetAllLockouts() {
+    if (!confirm("Are you sure you want to clear all active login lockouts and attempt counters?")) return;
+    try {
+      const res = await fetch('/admin/reset-login-attempts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ all: true })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        alert("✅ All rate limit lockouts have been reset successfully.");
+        loadLoginAttempts();
+      }
+    } catch (err) {
+      alert("Error resetting lockouts: " + err.message);
+    }
+  }
+
+  // ==========================================
+  // ====== LOGOUT HANDLER ====================
+  // ==========================================
+  async function logoutAdmin() {
+    if (!confirm("هل أنت متأكد من رغبتك في تسجيل الخروج من لوحة الإدارة؟")) return;
+    try {
+      await fetch('/admin/logout', { method: 'POST' });
+    } catch (e) {}
+    localStorage.removeItem('admin_token');
+    document.cookie = "admin_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    window.location.href = '/admin-login.html';
+  }
+
+  function escapeHtml(text) {
+    if (!text) return '';
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return String(text).replace(/[&<>"']/g, m => map[m]);
+  }
+
+  // Socket notification listener for new contact messages
+  socket.on("new-contact-message", (msg) => {
+    const badge = document.getElementById('contact-badge');
+    const current = parseInt(badge.textContent || '0') + 1;
+    badge.textContent = current;
+    badge.style.display = 'inline-block';
+
+    // If on contact tab, reload messages live
+    const activeTab = document.querySelector('.tab.active')?.dataset.tab;
+    if (activeTab === 'contact') {
+      loadContactMessages();
+    }
+  });
+
+  // Initial load
+  loadCountries();
+  loadStats();
+  loadContactMessages();
+  if (window.location.hash === '#blog') {
+    loadBlogs();
+  }
+  if (window.location.hash === '#contact') {
+    loadContactMessages();
+  }
+  if (window.location.hash === '#security') {
+    loadLoginAttempts();
+  }
+  // Load database stats if on database tab
+  if (window.location.hash === '#database') {
+    loadDatabaseStats();
+  }
+</script>
+</body>
+</html>
