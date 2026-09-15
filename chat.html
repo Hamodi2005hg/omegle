@@ -103,9 +103,6 @@
     .left-col{
       width:380px;min-width:260px;display:flex;flex-direction:column;gap:var(--gap);
     }
-    .mobile-skip-button {
-      display: none !important;
-    }
     .video-frame{
       position:relative;border-radius:var(--radius);
       border:6px solid var(--border);overflow:hidden;background:#333;
@@ -299,34 +296,6 @@
         bottom:auto;
         right:auto;
       }
-      .mobile-skip-button {
-        display: block !important;
-        width: 100%;
-        padding: 14px;
-        background: linear-gradient(135deg, #FF5D00 0%, #FF2A00 100%);
-        color: #fff;
-        border: none;
-        border-radius: 12px;
-        font-size: 16px;
-        font-weight: 700;
-        cursor: pointer;
-        text-align: center;
-        box-shadow: 0 4px 15px rgba(255, 93, 0, 0.3);
-        margin-top: 4px;
-        transition: transform 0.1s ease;
-        position: relative;
-        z-index: 9999;
-        pointer-events: auto !important;
-      }
-      .mobile-skip-button:active {
-        transform: scale(0.98);
-      }
-      .mobile-skip-button:disabled {
-        background: #ccc !important;
-        color: #888 !important;
-        cursor: not-allowed !important;
-        box-shadow: none !important;
-      }
       .chat-area{
         overflow-y: auto;
         scrollbar-width: thin;
@@ -383,7 +352,6 @@
         <div id="localSpinner" class="spinner" style="display: none;"></div>
         <video id="localVideo" autoplay muted playsinline></video>
       </div>
-      <button id="mobileSkipBtn" class="mobile-skip-button">Skip ➡️</button>
     </div>
     <button id="toggleMessagesBtn">▼</button>
     <div class="right-col">

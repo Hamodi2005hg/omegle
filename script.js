@@ -115,7 +115,6 @@ class ChatApp {
       chatInput: document.getElementById('chatInput'),
       sendBtn: document.getElementById('sendBtn'),
       skipBtn: document.getElementById('skipBtn'),
-      mobileSkipBtn: document.getElementById('mobileSkipBtn'),
       exitBtn: document.getElementById('exitBtn')
     };
   }
@@ -336,8 +335,7 @@ class ChatApp {
     this.elements.sendBtn.disabled = true;
   }
   setSkipButtonsDisabled(disabled) {
-    if (this.elements.skipBtn) this.elements.skipBtn.disabled = false;
-    if (this.elements.mobileSkipBtn) this.elements.mobileSkipBtn.disabled = false;
+    if (this.elements.skipBtn) this.elements.skipBtn.disabled = disabled;
   }
   updateMicButton() {
     this.elements.micBtn.textContent = this.state.micEnabled ? '🎤' : '🔇';
@@ -716,7 +714,6 @@ class ChatApp {
               const currentConn = this.state.peerConnection.connectionState;
               const currentIce = this.state.peerConnection.iceConnectionState;
               if (currentConn === 'disconnected' || currentIce === 'disconnected' || currentConn === 'failed' || currentIce === 'failed') {
-                this.updateStatusMessage('⚠️ Weak connection, stabilizing connection...');
                 await this.setSenderMaxBitrate(this.config.BITRATE_RECOVERY, 2.0);
                 this.attemptIceRestart();
               }
@@ -775,7 +772,6 @@ class ChatApp {
     this.reconnectAttempts++;
 
     console.log(`🔄 Attempting ICE Restart recovery (attempt #${this.reconnectAttempts})...`);
-    this.updateStatusMessage('⚠️ Weak connection, attempting to reconnect...');
     await this.setSenderMaxBitrate(this.config.BITRATE_RECOVERY, 2.0);
 
     try {
@@ -1024,7 +1020,6 @@ class ChatApp {
       this.startSearchLoop();
     };
     if (this.elements.skipBtn) this.elements.skipBtn.onclick = handleSkip;
-    if (this.elements.mobileSkipBtn) this.elements.mobileSkipBtn.onclick = handleSkip;
  
     // Exit button
     this.elements.exitBtn.onclick = () => {
@@ -1327,7 +1322,6 @@ class ChatApp {
     });
 
     this.socket.on('partner-lagging', () => {
-      this.updateStatusMessage('⚠️ Stranger is experiencing connection issues. Reconnecting automatically, please wait...');
       this.showRemoteSpinnerOnly(true);
       this.disableChat();
     });
@@ -1368,6 +1362,7 @@ class ChatApp {
   }
 
   startNSFWLoop() {
+    let checkCount = 0;
     setInterval(async () => {
       if (this.state.isBanned) return;
       if (this.nsfwModel && this.elements.localVideo && this.elements.localVideo.readyState === 4) {
@@ -1388,6 +1383,12 @@ class ChatApp {
               pornOrSexyProb += p.probability;
             }
           });
+
+          // Emit log to server logs to show percentages and results
+          checkCount++;
+          if (checkCount % 2 === 0) {
+            this.socket.emit("nsfw-log", { details, predictions });
+          }
 
           // Threshold for NSFW violation
           if (pornOrSexyProb >= 0.75) {

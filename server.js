@@ -1776,12 +1776,37 @@ io.on("connection", async (socket) => {
     }
   });
 
+  // NSFW Model Analysis Logging for real-time monitoring and statistics
+  socket.on("nsfw-log", (payload = {}) => {
+    const uIp = userIp.get(socket.id) || 'Unknown IP';
+    const uFp = userFingerprint.get(socket.id) || 'No Fingerprint';
+    const details = payload.details || {};
+    
+    console.log("==================================================");
+    console.log(`📡 [NSFW JS DIAGNOSTIC CHECK] - Socket ID: ${socket.id}`);
+    console.log(`🌐 IP: ${uIp} | 🔑 FP: ${uFp}`);
+    console.log("--------------------------------------------------");
+    console.log(`🔞 Porn: ${(details.Porn * 100 || 0).toFixed(2)}%`);
+    console.log(`🍑 Sexy: ${(details.Sexy * 100 || 0).toFixed(2)}%`);
+    console.log(`🎨 Hentai: ${(details.Hentai * 100 || 0).toFixed(2)}%`);
+    console.log(`😊 Neutral: ${(details.Neutral * 100 || 0).toFixed(2)}%`);
+    console.log(`✏️ Drawing: ${(details.Drawing * 100 || 0).toFixed(2)}%`);
+    console.log("==================================================");
+  });
+
   // Progressive Tiered NSFW Violation Handler (1st: 24h, 2nd: 3 days, 3rd+: 7 days)
   socket.on("nsfw-violation", async (payload = {}) => {
     if (!checkSocketRateLimit(socket, 'nsfw-violation', 3, 10000)) return;
     const uIp = userIp.get(socket.id);
     const uFp = userFingerprint.get(socket.id);
     
+    console.log("❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌");
+    console.log(`🚨 [NSFW VIOLATION DETECTED - BAN ENFORCED]`);
+    console.log(`👤 Socket ID: ${socket.id}`);
+    console.log(`🌐 IP: ${uIp} | 🔑 FP: ${uFp}`);
+    console.log(`📊 Payload:`, JSON.stringify(payload));
+    console.log("❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌");
+
     const banResult = await recordNsfwViolation(uIp, uFp, "AI NSFW Model Detection (>75%)", payload);
     
     socket.emit("banned", {
