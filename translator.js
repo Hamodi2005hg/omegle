@@ -1,11 +1,10 @@
 /**
- * Omegooo Universal Auto-Translation & Language Switcher
- * Real-time IP location detection, Google Translate trigger, and header / floating UI positioning.
+ * Omegooo Universal Auto-Translation & Header Language Switcher
+ * Provides clean header integration, auto IP language detection, and Google Translate triggering.
  */
 
 (function () {
   const STORAGE_KEY = 'omegooo_user_lang_v2';
-  const IS_CHAT_PAGE = window.location.pathname.includes('chat.html');
 
   const SUPPORTED_LANGUAGES = [
     { code: 'en', name: 'English', flag: '🇺🇸' },
@@ -106,12 +105,12 @@
 
   function injectStyles() {
     const style = document.createElement('style');
-    const positionCSS = `
+    style.innerHTML = `
       .gtrans-switcher-wrap {
         position: fixed;
-        bottom: 24px;
-        right: 24px;
-        z-index: 9999999;
+        bottom: 20px;
+        right: 20px;
+        z-index: 999999;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       }
       .gtrans-switcher-wrap.in-nav {
@@ -120,47 +119,50 @@
         left: auto;
         right: auto;
         bottom: auto;
-        z-index: 1000;
+        z-index: 99999;
         display: inline-flex;
         align-items: center;
       }
       .gtrans-btn {
-        background: #1e293b;
+        background: #0f172a;
         color: #ffffff;
-        border: 1.5px solid rgba(255,255,255,0.25);
+        border: 1px solid rgba(255,255,255,0.2);
         padding: 6px 12px;
         border-radius: 20px;
-        font-size: 12.5px;
+        font-size: 12px;
         font-weight: 700;
         cursor: pointer;
-        display: flex;
+        display: inline-flex;
         align-items: center;
         gap: 6px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.25);
         transition: all 0.2s ease;
         user-select: none;
         white-space: nowrap;
+        height: 34px;
+        line-height: 1;
       }
       .gtrans-btn:hover {
-        background: #334155;
+        background: #1e293b;
         border-color: #3b82f6;
+        transform: translateY(-1px);
       }
       .gtrans-dropdown {
         display: none;
         position: absolute;
         bottom: calc(100% + 8px);
         right: 0;
-        width: 190px;
-        max-height: 280px;
+        width: 185px;
+        max-height: 270px;
         overflow-y: auto;
         background: #0f172a;
-        border: 1px solid rgba(255,255,255,0.15);
-        border-radius: 14px;
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 12px;
         box-shadow: 0 15px 35px rgba(0,0,0,0.6);
-        padding: 6px;
+        padding: 5px;
         flex-direction: column;
         gap: 2px;
-        z-index: 9999999;
+        z-index: 999999;
       }
       .gtrans-switcher-wrap.in-nav .gtrans-dropdown {
         top: calc(100% + 8px);
@@ -174,10 +176,10 @@
       .gtrans-item {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
         padding: 8px 10px;
         color: #cbd5e1;
-        font-size: 12.5px;
+        font-size: 12px;
         font-weight: 600;
         border-radius: 8px;
         cursor: pointer;
@@ -185,7 +187,7 @@
         text-decoration: none;
       }
       .gtrans-item:hover, .gtrans-item.active {
-        background: rgba(255,255,255,0.15);
+        background: #2563eb;
         color: #ffffff;
       }
       .goog-te-banner-frame, .goog-te-balloon-frame { display: none !important; }
@@ -206,7 +208,7 @@
     const btn = document.createElement('button');
     btn.className = 'gtrans-btn';
     btn.type = 'button';
-    btn.innerHTML = `<span>${activeLangObj.flag}</span> <span>${activeLangObj.code.toUpperCase()}</span> <span style="font-size:9px;">▼</span>`;
+    btn.innerHTML = `<span>${activeLangObj.flag}</span> <span>${activeLangObj.code.toUpperCase()}</span> <span style="font-size:8px; opacity:0.8;">▼</span>`;
 
     const dropdown = document.createElement('div');
     dropdown.className = 'gtrans-dropdown';

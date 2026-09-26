@@ -689,7 +689,7 @@ class ChatApp {
       btn = document.createElement('button');
       btn.id = 'reenableMediaBtn';
       btn.type = 'button';
-      btn.innerHTML = '🎥 <span>Enable Camera & Microphone / إعـادة فـتـح الكاميـرا والميكـروفون</span>';
+      btn.innerHTML = '🎥 <span>Enable Camera & Microphone</span>';
       btn.style.cssText = `
         position: absolute;
         top: 50%;
