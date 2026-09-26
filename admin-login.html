@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <script src="/google-auth.js"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9832680951042052" crossorigin="anonymous"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+    <title>Admin Login | Omegooo</title>
+    <link rel="icon" type="image/svg+xml" href="/logo-icon.svg">
+    <style>
+        :root {
+            --primary: #FF6600;
+            --primary-hover: #E05500;
+            --blue: #0099FF;
+            --dark: #1E293B;
+            --gray: #64748B;
+            --light-bg: #F8FAFC;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --success: #10B981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: var(--dark);
+        }
+        
+        .login-card {
+            background: #FFFFFF;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+            width: 100%;
+            max-width: 460px;
+            padding: 44px 36px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #FF6600, #00C0FF, #0066FF);
+        }
+
+        .logo-container {
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-img {
+            height: 52px;
+            margin-bottom: 12px;
+            object-fit: contain;
+        }
+
+        .login-header h1 {
+            color: #0F172A;
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        
+        .login-header p {
+            color: var(--gray);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Rate limit attempts indicator badge */
+        .attempts-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #FEF3C7;
+            color: #92400E;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 700;
+            margin: 18px 0;
+            border: 1px solid #FDE68A;
+        }
+
+        .attempts-badge.danger {
+            background: #FEE2E2;
+            color: #991B1B;
+            border-color: #FECACA;
+        }
+
+        .attempts-badge.locked {
+            background: #450A0A;
+            color: #FCA5A5;
+            border-color: #7F1D1D;
+        }
+
+        .dot-indicator {
+            display: flex;
+            gap: 5px;
+            margin-right: 4px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10B981;
+            transition: all 0.3s;
+        }
+
+        .dot.used {
+            background: #EF4444;
+        }
+
+        .form-group {
+            margin-bottom: 22px;
+            text-align: right;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #334155;
+            margin-bottom: 8px;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        
+        .input-wrapper {
+            position: relative;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #E2E8F0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.2s;
+            background: #F8FAFC;
+            color: #0F172A;
+            text-align: right;
+            direction: ltr;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #FFFFFF;
+            box-shadow: 0 0 0 4px rgba(255, 102, 0, 0.12);
+        }
+
+        .form-group input:disabled {
+            background: #E2E8F0;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        
+        .login-btn {
+            background: linear-gradient(135deg, #FF6600 0%, #E05500 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(255, 102, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .login-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 102, 0, 0.4);
+        }
+        
+        .login-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .login-btn:disabled {
+            background: #94A3B8;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+        
+        .error-message {
+            color: #B91C1C;
+            background: #FEF2F2;
+            border: 1px solid #F87171;
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 14px;
+            line-height: 1.5;
+            text-align: right;
+        }
+
+        .success-message {
+            color: #065F46;
+            background: #ECFDF5;
+            border: 1px solid #34D399;
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 14px;
+            text-align: center;
+            font-weight: 700;
+        }
+        
+        .security-notice {
+            color: var(--gray);
+            font-size: 12px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #E2E8F0;
+            line-height: 1.6;
+        }
+
+        .lockout-box {
+            background: #450A0A;
+            color: #FECACA;
+            border: 1px solid #991B1B;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 16px;
+            color: #64748B;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--primary);
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #ffffff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <!-- Logo -->
+        <div class="logo-container">
+            <a href="/">
+                <img src="/logo.svg" alt="Omegooo Logo" class="logo-img" onerror="this.src='/logo-icon.svg'">
+            </a>
+            <div class="login-header">
+                <h1>Admin Control Panel</h1>
+                <p>Please enter the authorized password to access the panel</p>
+            </div>
+        </div>
+
+        <!-- Remaining Attempts Badge -->
+        <div class="attempts-badge" id="attemptsBadge">
+            <span>Allowed Attempts: <strong>3 attempts</strong></span>
+            <div class="dot-indicator" id="dotIndicator">
+                <span class="dot" id="dot1"></span>
+                <span class="dot" id="dot2"></span>
+                <span class="dot" id="dot3"></span>
+            </div>
+        </div>
+
+        <div class="lockout-box" id="lockoutBox">
+            <div style="font-size: 24px; margin-bottom: 6px;">🔒</div>
+            <strong>Login Temporarily Locked!</strong>
+            <p id="lockoutTimerMsg">3 failed attempts reached. Please wait 15 minutes before trying again.</p>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+        
+        <form class="login-form" id="loginForm">
+            <div class="form-group">
+                <label for="password">Admin Password:</label>
+                <div class="input-wrapper">
+                    <input type="password" id="password" placeholder="••••••••••••" required autocomplete="current-password">
+                </div>
+            </div>
+            
+            <button type="submit" class="login-btn" id="submitBtn">
+                <span class="spinner" id="btnSpinner"></span>
+                <span id="btnText">Log In to Panel</span>
+            </button>
+        </form>
+        
+        <div class="security-notice">
+            <p>🛡️ Security system active: Client IP address and each attempt are recorded to prevent brute-force attacks (Rate Limiting - 3 Attempts).</p>
+        </div>
+
+        <div>
+            <a href="/" class="back-link">&larr; Return to Homepage</a>
+        </div>
+    </div>
+
+    <script>
+        let usedAttempts = 0;
+        const maxAttempts = 3;
+
+        function updateDots(attempts) {
+            for (let i = 1; i <= maxAttempts; i++) {
+                const dot = document.getElementById(`dot${i}`);
+                if (dot) {
+                    if (i <= attempts) {
+                        dot.classList.add('used');
+                    } else {
+                        dot.classList.remove('used');
+                    }
+                }
+            }
+
+            const badge = document.getElementById('attemptsBadge');
+            const remaining = Math.max(0, maxAttempts - attempts);
+            if (attempts >= maxAttempts) {
+                badge.className = 'attempts-badge locked';
+                badge.innerHTML = '🔒 Account temporarily locked (0 attempts left)';
+            } else if (attempts > 0) {
+                badge.className = 'attempts-badge danger';
+                badge.innerHTML = `⚠️ Remaining attempts: <strong>${remaining} of ${maxAttempts}</strong>`;
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const passwordInput = document.getElementById('password');
+            const password = passwordInput.value;
+            const errorElement = document.getElementById('errorMessage');
+            const successElement = document.getElementById('successMessage');
+            const lockoutBox = document.getElementById('lockoutBox');
+            const submitBtn = document.getElementById('submitBtn');
+            const btnSpinner = document.getElementById('btnSpinner');
+            const btnText = document.getElementById('btnText');
+            
+            errorElement.style.display = 'none';
+            successElement.style.display = 'none';
+
+            submitBtn.disabled = true;
+            btnSpinner.style.display = 'inline-block';
+            btnText.textContent = 'Verifying...';
+
+            try {
+                const response = await fetch('/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    // Success! Store token in localStorage as well
+                    if (data.token) {
+                        localStorage.setItem('admin_token', data.token);
+                    }
+                    successElement.textContent = '✅ Verified successfully! Redirecting to admin panel...';
+                    successElement.style.display = 'block';
+                    updateDots(0);
+
+                    setTimeout(() => {
+                        window.location.href = '/admin-panel.html';
+                    }, 800);
+                } else if (response.status === 429 || data.locked) {
+                    // Locked out due to rate limit (3 attempts)
+                    updateDots(3);
+                    passwordInput.disabled = true;
+                    submitBtn.disabled = true;
+                    lockoutBox.style.display = 'block';
+                    if (data.error) {
+                        document.getElementById('lockoutTimerMsg').textContent = data.error;
+                    }
+                    errorElement.style.display = 'none';
+                } else {
+                    // Failed attempt
+                    usedAttempts = (data.attemptsUsed !== undefined) ? data.attemptsUsed : (usedAttempts + 1);
+                    updateDots(usedAttempts);
+
+                    errorElement.textContent = data.error || 'Incorrect password. Please try again.';
+                    errorElement.style.display = 'block';
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorElement.textContent = 'Connection error. Please try again later.';
+                errorElement.style.display = 'block';
+            } finally {
+                if (!passwordInput.disabled) {
+                    submitBtn.disabled = false;
+                }
+                btnSpinner.style.display = 'none';
+                btnText.textContent = 'Log In to Panel';
+            }
+        });
+        
+        // Hide error on typing
+        document.getElementById('password').addEventListener('input', function() {
+            document.getElementById('errorMessage').style.display = 'none';
+        });
+    </script>
+</body>
+</html>

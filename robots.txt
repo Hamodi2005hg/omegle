@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Allow: /chat.html
+Allow: /blog.html
+Allow: /about.html
+Allow: /contact.html
+Allow: /logo.svg
+Allow: /logo-icon.svg
+Disallow: /admin
+Disallow: /admin/
+Disallow: /admin-login
+Disallow: /admin-login.html
+Disallow: /admin-panel
+Disallow: /admin-panel.html
+Disallow: /api/
+
+Sitemap: https://omegooo.com/sitemap.xml

@@ -1,0 +1,11 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+node-compile-cache/
+run/
+.ca3003e4bb96d5b6-0.hm

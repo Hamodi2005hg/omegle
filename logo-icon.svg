@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <defs>
+    <linearGradient id="iconOrangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF5D00"/>
+      <stop offset="100%" stop-color="#FF2A00"/>
+    </linearGradient>
+    <linearGradient id="iconCyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F0FF"/>
+      <stop offset="100%" stop-color="#0088FF"/>
+    </linearGradient>
+    <filter id="iconShadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#FF5D00" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Modern Icon Base -->
+  <rect x="2" y="2" width="96" height="96" rx="28" fill="#141722" stroke="url(#iconOrangeGrad)" stroke-width="2.5" />
+  
+  <!-- Stylized double speech bubble -->
+  <g transform="translate(10, 10)">
+    <!-- Right chat bubble (Cyan) -->
+    <path d="M52 42 C52 32 60 25 70 25 C80 25 88 32 88 42 C88 52 80 60 70 60 C66 60 62 58 59 55 L50 62 L52 52 Z" fill="url(#iconCyanGrad)" opacity="0.9" />
+    <!-- Left chat bubble (Orange) -->
+    <path d="M12 30 C12 20 22 12 34 12 C46 12 56 20 56 30 C56 40 46 48 34 48 C29 48 25 46 22 44 L12 50 L15 41 Z" fill="url(#iconOrangeGrad)" filter="url(#iconShadow)" />
+    
+    <!-- Camera icon in left bubble -->
+    <path d="M26 25 H38 C40 25 41 26 41 28 V34 C41 36 40 37 38 37 H26 C24 37 23 36 23 34 V28 C23 26 24 25 26 25 Z" fill="#FFFFFF" />
+    <polygon points="41,28 47,24 47,38 41,34" fill="#FFFFFF" />
+  </g>
+</svg>

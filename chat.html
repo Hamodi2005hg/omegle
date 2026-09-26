@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <script src="/google-auth.js"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9832680951042052" crossorigin="anonymous"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Live Video Chat | Omegooo.com - Free Random Video Call</title>
+  <meta name="description" content="Talk to strangers face-to-face in high definition with Omegooo.com live video chat. Instant connection, AI-monitored, 100% free and anonymous." />
+  <meta name="keywords" content="live video chat, stranger video call, omegle video alternative, random cam chat, anonymous webcam, talk to strangers online, cam chat, chatrandom, chatroulette, talk to strangers securely, free safe cam chat with strangers, clean omegle alternative, clean chatroulette replacement, best free stranger video chat, live cam talk with AI filter, safe random video chat, anonymous video chat without registration, no registration stranger cam, safe chat alternative for teens and adults, local and international stranger talk, random video call free no sign up, meet new people online video, global webcam chat anonymous, best stranger cam platform, instant random matching webcam, secure online video calling anonymous, omegle alternative, best omegle alternative, omegle replacement, omegle successor, sites like omegle, omegle alternative free, random video chat, free random video chat, anonymous video chat, online video chat, video chat with strangers, webcam chat online, talk to strangers, chat with strangers, meet new people online, random chat room, chatroulette alternative, monkey app alternative, azar alternative, emerald chat alternative, ome.tv alternative, ome alternative, ome free, free ome, omegle official successor, omegle free, omegle online, omegle nsf, omegle master, omegle oo" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="/chat.html" />
+  <link rel="icon" type="image/svg+xml" href="/logo-icon.svg">
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/nsfwjs@2.4.2/dist/nsfwjs.min.js"></script>
+  <style>
+    :root{
+      --blue:#2ea3ff;
+      --dark:#111;
+      --light:#ffffff;
+      --border:#e6d7c8;
+      --gap:10px;
+      --radius:12px;
+      --bg:#ffffff;
+      --text:#000;
+      /* Message colors - Day */
+      --msgYou:#e3f2fd;
+      --msgStranger:#fff3e0;
+      --msgSystem:#f5f5f5;
+      --msgYouBorder:#42a5f5;
+      --msgStrangerBorder:#ff9800;
+    }
+    .dark{
+      --bg:#121212;
+      --text:#e0e0e0;
+      /* Message colors - Night */
+      --msgYou:#1e88e5;
+      --msgStranger:#f57c00;
+      --msgSystem:#424242;
+      --border:#444;
+      --msgYouBorder:#42a5f5;
+      --msgStrangerBorder:#ff9800;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html, body{height:100%;overflow:hidden;font-family:Arial, sans-serif;background:var(--bg);color:var(--text)}
+ 
+    .logo{
+      font-size:48px;
+      font-weight:bold;
+      color:#ff9a00;
+      display:flex;
+      gap:4px;
+      align-items:center;
+    }
+    .logo span{
+      display:inline-block;
+    }
+    .logo .first-letter{
+      color:#ff9a00;
+      position:relative;
+    }
+ 
+    /* Explode/puff animation for first letter */
+    @keyframes puff-explode {
+      0% { transform: scale(1); }
+      20% { transform: scale(1.4); }
+      40% { transform: scale(1.2); }
+      60% { transform: scale(1.6); opacity: 1; }
+      80% { transform: scale(2); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+ 
+    .puff{
+      animation: puff-explode 1s ease-in-out;
+    }
+ 
+    .topbar{
+      height:60px;display:flex;justify-content:space-between;align-items:center;
+      padding:0 12px;border-bottom:1px solid #ddd;background:var(--bg);
+    }
+    #exitBtn{background:red;color:#fff;padding:8px 12px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;}
+    #darkToggle{
+      background:#444;color:#fff;border:none;padding:8px 12px;border-radius:8px;
+      cursor:pointer;margin-right:10px;
+    }
+    .notify-box{position:relative;margin-right:12px;cursor:pointer;}
+    #notifyIcon{font-size:24px;}
+    #notifyDot{
+      width:10px;height:10px;background:red;border-radius:50%;
+      position:absolute;top:0;right:0;display:none;
+    }
+    #notifyMenu{
+      position:absolute;right:0;top:40px;width:220px;
+      background:#fff;border:1px solid #ccc;border-radius:8px;
+      display:none;max-height:250px;overflow-y:auto;z-index:999;
+    }
+    .notify-item{padding:10px;border-bottom:1px solid #ddd;font-size:14px;}
+    .notify-empty{padding:10px;text-align:center;color:#777;}
+ 
+    .stage{
+      position:absolute;top:60px;bottom:0;left:0;right:0;
+      display:flex;gap:var(--gap);padding:12px;overflow:hidden;
+    }
+    .left-col{
+      width:380px;min-width:260px;display:flex;flex-direction:column;gap:var(--gap);
+    }
+    .video-frame{
+      position:relative;border-radius:var(--radius);
+      border:6px solid var(--border);overflow:hidden;background:#333;
+      display:flex;justify-content:center;align-items:center;
+    }
+    .video-frame.top{height:360px;}
+    .video-frame.bottom{height:360px;}
+    video{width:100%;height:100%;object-fit:cover;position:relative;z-index:1;background:#0f172a;}
+    #localVideo{
+      transform: scaleX(-1);
+      -webkit-transform: scaleX(-1);
+    }
+    .video-label{
+      position:absolute;top:8px;left:8px;
+      padding:4px 12px;border-radius:20px;z-index:6;
+      font-weight:600;font-size:12px;
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .dark .video-label{
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .watermark{
+      position:absolute;bottom:10px;left:10px;font-size:14px;
+      color:#ffffffaa;font-weight:bold;z-index:6;
+    }
+    .spinner{
+      position:absolute;width:60px;height:60px;border-radius:50%;
+      border:6px solid #fff;border-top-color:transparent;
+      animation:spin 1s linear infinite;z-index:20;
+    }
+    @keyframes spin{from{transform:rotate(0);}to{transform:rotate(360deg);}}
+    #micBtn{
+      position:absolute;bottom:10px;right:10px;background:var(--blue);
+      color:#fff;padding:7px;font-size:16px;border-radius:50%;cursor:pointer;
+      border:none;z-index:10;min-width:40px;min-height:40px;
+    }
+    #reportBtn{
+      position:absolute;
+      bottom:10px;
+      right:10px;
+      background:red;
+      color:#fff;
+      padding:4px 8px;
+      font-size:10px;
+      border-radius:6px;
+      cursor:pointer;
+      border:none;
+      z-index:10;
+    }
+    .right-col{
+      flex:1;display:flex;flex-direction:column;
+      border:6px solid var(--border);border-radius:10px;
+      background:var(--bg);min-width:240px;height:100%;
+    }
+    .chat-area{
+      flex:1;padding:12px;overflow-y:auto;
+      display:flex;flex-direction:column;gap:8px;
+    }
+ 
+    /* High-contrast messages in both modes */
+    .msg{
+      padding:12px 16px;max-width:75%;border-radius:12px;font-size:14px;
+      font-weight:500;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      line-height:1.5;
+    }
+    .msg.you{
+      background:var(--msgYou);
+      border:2px solid var(--msgYouBorder);
+      color:#0d47a1; /* Dark blue */
+      align-self:flex-end;
+    }
+    .dark .msg.you{
+      color:#ffffff; /* White in dark mode */
+    }
+    .msg.stranger{
+      background:var(--msgStranger);
+      border:2px solid var(--msgStrangerBorder);
+      color:#e65100; /* Dark orange */
+      align-self:flex-start;
+    }
+    .dark .msg.stranger{
+      color:#ffffff; /* White in dark mode */
+    }
+    .msg.system{
+      background:var(--msgSystem);
+      align-self:center;
+      border:1px solid var(--border);
+      color:var(--text);
+      font-size:13px;
+      padding:8px 16px;
+    }
+ 
+    .chat-input-row{
+      display:flex;flex-direction:column;gap:8px;padding:10px;
+      background:var(--bg);
+      border-top:1px solid var(--border);
+      position:sticky;bottom:0;left:0;right:0;z-index:50;
+    }
+    .typing-indicator {
+      display: none;
+      padding: 6px 10px;
+      background: var(--bg);
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      text-align: center;
+      font-size: 13px;
+      color: var(--blue);
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    .typing-indicator.active {
+      display: block;
+    }
+    .typing-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: var(--blue);
+      border-radius: 50%;
+      margin-right: 8px;
+      animation: typingPulse 1.5s infinite;
+    }
+    @keyframes typingPulse {
+      0% { opacity: 0.3; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.1); }
+      100% { opacity: 0.3; transform: scale(0.8); }
+    }
+    .dark .typing-indicator {
+      border-color: var(--border);
+    }
+    .input-container{display:flex;gap:8px;align-items:center;}
+    #skipBtn{
+      background: var(--blue);
+      color:#fff;padding:10px 14px;
+      border-radius:8px;cursor:pointer;border:none;
+      font-weight:600;height:42px;
+      display:flex;align-items:center;justify-content:center;
+    }
+
+    /* Gender Filter Button and Dropdown */
+    .gender-filter-wrap {
+      position: relative;
+      display: inline-flex;
+    }
+    .gender-filter-btn {
+      background: var(--surface, #f1f5f9);
+      color: var(--text, #1e293b);
+      border: 1.5px solid var(--border, #cbd5e1);
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13.5px;
+      padding: 0 10px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .gender-filter-btn:hover {
+      border-color: var(--blue);
+    }
+    .gender-filter-btn.active-female {
+      background: #fdf2f8;
+      border-color: #ec4899;
+      color: #db2777;
+    }
+    .gender-filter-btn.active-male {
+      background: #eff6ff;
+      border-color: #3b82f6;
+      color: #2563eb;
+    }
+    .dark .gender-filter-btn {
+      background: #1e293b;
+      color: #f1f5f9;
+      border-color: #334155;
+    }
+    .dark .gender-filter-btn.active-female {
+      background: #831843;
+      border-color: #f472b6;
+      color: #fbcfe8;
+    }
+    .dark .gender-filter-btn.active-male {
+      background: #1e3a8a;
+      border-color: #60a5fa;
+      color: #bfdbfe;
+    }
+    .gender-filter-menu {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 0;
+      width: 260px;
+      background: var(--bg, #ffffff);
+      border: 1px solid var(--border, #cbd5e1);
+      border-radius: 12px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      animation: filterMenuIn 0.15s ease-out;
+    }
+    @keyframes filterMenuIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .dark .gender-filter-menu {
+      background: #1e293b;
+      border-color: #334155;
+    }
+    .filter-menu-header {
+      padding: 8px 12px;
+      background: rgba(0,0,0,0.03);
+      border-bottom: 1px solid var(--border, #e2e8f0);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .dark .filter-menu-header {
+      background: rgba(255,255,255,0.03);
+      border-bottom-color: #334155;
+    }
+    .filter-remaining-badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: #10b981;
+      background: #ecfdf5;
+      padding: 2px 6px;
+      border-radius: 8px;
+    }
+    .dark .filter-remaining-badge {
+      background: #064e3b;
+      color: #34d399;
+    }
+    .filter-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .filter-menu-item:hover {
+      background: rgba(46, 163, 255, 0.08);
+    }
+    .filter-menu-item.active {
+      background: rgba(46, 163, 255, 0.15);
+      font-weight: bold;
+    }
+    .filter-menu-item .opt-icon { font-size: 18px; }
+    .filter-menu-item .opt-text { flex: 1; text-align: left; }
+    .filter-menu-item .opt-title { font-size: 13px; color: var(--text, #1e293b); }
+    .dark .filter-menu-item .opt-title { color: #f8fafc; }
+    .filter-menu-item .opt-sub { font-size: 11px; color: #64748b; }
+    .opt-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .opt-badge.free { background: #e2e8f0; color: #475569; }
+    .dark .opt-badge.free { background: #334155; color: #94a3b8; }
+    .opt-badge.locked { background: #fef3c7; color: #b45309; }
+    .opt-badge.unlocked { background: #dcfce7; color: #15803d; }
+
+    /* Floating Close Button for Offer Locker */
+    .offer-floating-bar {
+      display: none;
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2147483647;
+      animation: fadeInOfferBtn 0.25s ease-out;
+      width: auto;
+      max-width: 90vw;
+      text-align: center;
+      justify-content: center;
+    }
+    @keyframes fadeInOfferBtn {
+      from { opacity: 0; transform: translate(-50%, -12px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
+    .offer-floating-close-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 28px;
+      background: #dc2626;
+      color: #ffffff;
+      border: 2.5px solid #ffffff;
+      border-radius: 9999px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(220, 38, 38, 0.7), 0 0 20px rgba(0, 0, 0, 0.8);
+      transition: all 0.2s ease;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .offer-floating-close-btn:hover {
+      background: #b91c1c;
+      transform: scale(1.04);
+      box-shadow: 0 14px 35px rgba(185, 28, 28, 0.9);
+    }
+    .offer-floating-close-btn:active {
+      transform: scale(0.98);
+    }
+
+    .input-container {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      width: 100%;
+      min-width: 0;
+    }
+    #skipBtn {
+      background: var(--blue);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: none;
+      font-weight: 600;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .gender-filter-wrap {
+      flex-shrink: 0;
+    }
+    #chatInput {
+      flex: 1;
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      box-sizing: border-box;
+    }
+    #sendBtn {
+      width: 42px;
+      min-width: 42px;
+      height: 42px;
+      background: var(--blue);
+      color: #fff;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    #sendBtn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+ 
+    @media (max-width: 768px){
+      html, body {
+        overflow: hidden !important;
+        position: fixed;
+        width: 100%;
+        height: 100%;
+      }
+      #exitBtn { display:none !important; }
+      #toggleMessagesBtn { display:none !important; }
+      .stage{
+        position: fixed;
+        top: 60px;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        padding: 6px;
+        gap: 6px;
+        overflow: hidden !important;
+        height: calc(100vh - 60px);
+        height: calc(100dvh - 60px);
+        box-sizing: border-box;
+      }
+      .left-col{
+        width: 100%;
+        min-width: unset;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        position: relative;
+        flex-shrink: 0;
+      }
+      .video-frame.top{
+        height: 220px;
+        max-height: 28vh;
+        width: 100%;
+        border-width: 3px;
+        flex-shrink: 0;
+      }
+      .video-frame.bottom{
+        position: relative;
+        bottom: auto;
+        right: auto;
+        width: 100%;
+        height: 220px;
+        max-height: 28vh;
+        border-width: 3px;
+        z-index: 1;
+        flex-shrink: 0;
+      }
+      #reportBtn{
+        left: 8px !important;
+        right: auto !important;
+        bottom: 8px !important;
+        padding: 2px 6px;
+        font-size: 9px;
+      }
+      #micBtn{
+        bottom: 8px !important;
+        right: 8px !important;
+        transform: none;
+        min-width: 30px;
+        min-height: 30px;
+        font-size: 12px;
+        padding: 3px;
+      }
+      .right-col{
+        flex: 1;
+        min-height: 0;
+        height: auto;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border-width: 3px;
+      }
+      .chat-area{
+        flex: 1;
+        min-height: 0;
+        max-height: none;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        padding: 8px;
+        scrollbar-width: thin;
+        scrollbar-color: #bbbbbb #f1f1f1;
+      }
+      .chat-area::-webkit-scrollbar{
+        width: 4px;
+      }
+      .chat-area::-webkit-scrollbar-thumb{
+        background: #b5b5b5;
+        border-radius: 10px;
+      }
+      .chat-area::-webkit-scrollbar-track{
+        background: #f1f1f1;
+      }
+      .chat-input-row {
+        width: 100%;
+        padding: 6px;
+        box-sizing: border-box;
+        flex-shrink: 0;
+      }
+      .input-container {
+        width: 100%;
+        gap: 6px;
+        min-width: 0;
+        box-sizing: border-box;
+      }
+      #skipBtn {
+        padding: 8px 10px;
+        font-size: 13px;
+        height: 38px;
+        flex-shrink: 0;
+      }
+      .gender-filter-btn {
+        padding: 6px 8px;
+        font-size: 12px;
+        height: 38px;
+        flex-shrink: 0;
+      }
+      #chatInput {
+        flex: 1;
+        min-width: 0;
+        height: 38px;
+        padding: 6px 8px;
+        font-size: 13px;
+      }
+      #sendBtn {
+        width: 38px;
+        min-width: 38px;
+        height: 38px;
+        flex-shrink: 0;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+      }
+    }
+    @media (min-width: 769px){
+      #toggleMessagesBtn{
+        display:none !important;
+      }
+    }
+  </style>
+</head>
+<body>  <!-- Default to Light Mode -->
+  <div class="topbar">
+    <a href="/" title="Omegooo.com - Home" style="display:flex; align-items:center; text-decoration:none;">
+      <img src="/logo.svg" alt="Omegooo.com" style="height: 38px; object-fit: contain;" onerror="this.src='/logo-icon.svg'">
+    </a>
+    <div style="display:flex;gap:14px;align-items:center;">
+      <div class="notify-box">
+        <div id="notifyIcon">🔔</div>
+        <div id="notifyDot"></div>
+        <div id="notifyMenu">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#1e293b; color:#fff; font-size:12px; font-weight:bold; border-bottom:1px solid #334155; border-radius:8px 8px 0 0;">
+            <span>Notifications</span>
+            <button type="button" onclick="event.stopPropagation(); document.getElementById('notifyMenu').style.display='none';" style="background:none; border:none; color:#94a3b8; font-size:14px; font-weight:bold; cursor:pointer;" title="Close">✕</button>
+          </div>
+          <div class="notify-empty">No notifications</div>
+        </div>
+      </div>
+      <!-- Discord Header Button -->
+      <a href="https://discord.gg/dtjrcWUCa" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; background:#5865F2; color:#ffffff; border-radius:8px; text-decoration:none; transition:transform 0.2s, background 0.2s;" title="Join Discord Server" onmouseover="this.style.background='#4752C4'; this.style.transform='scale(1.05)';" onmouseout="this.style.background='#5865F2'; this.style.transform='scale(1)';">
+        <svg width="20" height="20" viewBox="0 0 127.14 96.36" fill="#ffffff">
+          <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74C48.74,40.23,53.88,46,53.88,53S48.74,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74C91,40.23,96.11,46,96.11,53S91,65.69,84.69,65.69Z"/>
+        </svg>
+      </a>
+      <button id="darkToggle">🌙</button>  <!-- Default to dark icon since light mode is default -->
+      <button id="exitBtn">Exit</button>
+    </div>
+  </div>
+  <div class="stage">
+    <div class="left-col">
+      <div class="video-frame top">
+        <button id="reportBtn">🚨 Report18+</button>
+        <div class="watermark">Omegooo.com</div>
+        <div class="video-label">Stranger</div>
+        <div id="remoteSpinner" class="spinner" style="display: none;"></div>
+        <video id="remoteVideo" autoplay playsinline></video>
+      </div>
+      <div class="video-frame bottom">
+        <button id="micBtn">🎤</button>
+        <div class="watermark">Omegooo.com</div>
+        <div class="video-label">You</div>
+        <div id="localSpinner" class="spinner" style="display: none;"></div>
+        <video id="localVideo" autoplay muted playsinline></video>
+      </div>
+    </div>
+    <button id="toggleMessagesBtn">▼</button>
+    <div class="right-col">
+      <div id="chatMessages" class="chat-area">
+        <div class="msg system">Connecting...</div>
+      </div>
+      <div class="chat-input-row">
+        <div class="typing-indicator" id="typingIndicator">
+          <span class="typing-dot"></span>
+          <span id="typingText">Stranger is typing...</span>
+        </div>
+     
+        <div class="input-container">
+          <button id="skipBtn">Skip</button>
+
+          <!-- Gender Filter Control -->
+          <div class="gender-filter-wrap">
+            <button id="genderFilterBtn" type="button" class="gender-filter-btn" title="Gender Filter">
+              <span id="genderFilterIcon">👥</span>
+              <span id="genderFilterLabel">All</span>
+              <span id="genderFilterLock" style="font-size:12px;">🔒</span>
+              <span style="font-size:10px; opacity:0.6;">▼</span>
+            </button>
+
+            <div id="genderFilterMenu" class="gender-filter-menu" style="display:none;">
+              <div class="filter-menu-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <span>Filter Matching</span>
+                <button type="button" id="closeGenderFilterBtn" onclick="event.stopPropagation(); document.getElementById('genderFilterMenu').style.display='none';" style="background:rgba(255,255,255,0.15); border:none; color:#94a3b8; font-size:14px; font-weight:bold; cursor:pointer; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center;" title="Close Menu">✕</button>
+              </div>
+              <div class="filter-menu-item active" data-gender="all">
+                <span class="opt-icon">👥</span>
+                <div class="opt-text">
+                  <div class="opt-title">All</div>
+                  <div class="opt-sub">Random matching</div>
+                </div>
+                <span class="opt-badge free">Free</span>
+              </div>
+              <div class="filter-menu-item" data-gender="female">
+                <span class="opt-icon">👩</span>
+                <div class="opt-text">
+                  <div class="opt-title">Female</div>
+                  <div class="opt-sub">Priority female matching</div>
+                </div>
+                <span class="opt-badge locked" id="femaleBadge">🔒 Locked</span>
+              </div>
+              <div class="filter-menu-item" data-gender="male">
+                <span class="opt-icon">👨</span>
+                <div class="opt-text">
+                  <div class="opt-title">Male</div>
+                  <div class="opt-sub">Priority male matching</div>
+                </div>
+                <span class="opt-badge locked" id="maleBadge">🔒 Locked</span>
+              </div>
+            </div>
+          </div>
+
+          <input id="chatInput" placeholder="Type..." disabled />
+          <button id="sendBtn" disabled>➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Close Offer Button -->
+  <div id="offerFloatBar" class="offer-floating-bar">
+    <button type="button" id="closeOfferFloatingBtn" onclick="closeOfferLocker()" class="offer-floating-close-btn" title="Close offer and return">
+      <span style="font-size:18px; font-weight:900; line-height:1;">✕</span>
+      <span>Close &amp; Return</span>
+    </button>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js?v=2.0.1"></script>
+  <script>
+    /* Dark mode toggle */
+    const darkToggleBtn = document.getElementById("darkToggle");
+    darkToggleBtn.onclick = () => {
+      document.body.classList.toggle("dark");
+      darkToggleBtn.innerText = document.body.classList.contains("dark") ? "☀️" : "🌙";
+    };
+ 
+    /* Update button icon on load to match default light mode */
+    darkToggleBtn.innerText = "🌙";
+ 
+    /* Toggle messages on mobile */
+    const toggleMessagesBtn = document.getElementById("toggleMessagesBtn");
+    toggleMessagesBtn.onclick = () => {
+      document.body.classList.toggle("messages-hidden");
+      toggleMessagesBtn.innerText =
+        document.body.classList.contains("messages-hidden") ? "▲" : "▼";
+    };
+ 
+    /* Report button modal handler */
+    window.openReportModal = function() {
+      document.getElementById('reportModal').style.display = 'flex';
+    };
+    window.closeReportModal = function() {
+      document.getElementById('reportModal').style.display = 'none';
+    };
+    window.submitReportModal = function() {
+      const selected = document.querySelector('input[name="reportReason"]:checked');
+      const reason = selected ? selected.value : 'Inappropriate Behavior';
+      if (window.chatApp && typeof window.chatApp.reportPartner === 'function') {
+        window.chatApp.reportPartner(reason);
+      } else if (typeof socket !== 'undefined' && socket) {
+        socket.emit("report-user", { reason });
+      }
+      closeReportModal();
+      alert("✅ Report submitted successfully. Thank you for helping keep Omegooo.com safe!");
+    };
+
+    document.getElementById("reportBtn").onclick = () => {
+      openReportModal();
+    };
+ 
+    /* Typing indicator functions */
+    function showTypingIndicator() {
+      document.getElementById('typingIndicator').classList.add('active');
+    }
+    function hideTypingIndicator() {
+      document.getElementById('typingIndicator').classList.remove('active');
+    }
+ 
+    let typingTimeout;
+    const chatInput = document.getElementById('chatInput');
+    chatInput.addEventListener('input', () => {
+      if (chatInput.value.length > 0) {
+        console.log('Sending typing event...');
+      }
+    });
+ 
+    function simulatePartnerTyping() {
+      showTypingIndicator();
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(() => {
+        hideTypingIndicator();
+      }, 3000);
+    }
+ 
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && e.shiftKey) {
+        simulatePartnerTyping();
+      }
+    });
+
+    // =====================================================
+    // Gender Filter & MyLead Offer Locker Management
+    // =====================================================
+    const UNLOCKED_KEY = 'mylead_gender_filter_unlocked';
+    const SELECTED_FILTER_KEY = 'omegooo_chat_gender_filter';
+    let currentFilterGender = localStorage.getItem(SELECTED_FILTER_KEY) || 'all';
+    let pendingOfferGender = null;
+
+    function isGenderFilterUnlocked() {
+      return localStorage.getItem(UNLOCKED_KEY) === 'true';
+    }
+
+    // Expose getter for ChatApp socket emission
+    window.getActiveGenderFilter = function() {
+      if (currentFilterGender === 'all') return 'all';
+      if (isGenderFilterUnlocked()) {
+        return currentFilterGender;
+      } else {
+        currentFilterGender = 'all';
+        localStorage.setItem(SELECTED_FILTER_KEY, 'all');
+        updateFilterUI();
+        return 'all';
+      }
+    };
+
+    const genderFilterBtn = document.getElementById('genderFilterBtn');
+    const genderFilterMenu = document.getElementById('genderFilterMenu');
+    const genderFilterIcon = document.getElementById('genderFilterIcon');
+    const genderFilterLabel = document.getElementById('genderFilterLabel');
+    const genderFilterLock = document.getElementById('genderFilterLock');
+    const femaleBadge = document.getElementById('femaleBadge');
+    const maleBadge = document.getElementById('maleBadge');
+
+    function updateFilterUI() {
+      const unlocked = isGenderFilterUnlocked();
+
+      // Update button appearance
+      genderFilterBtn.classList.remove('active-female', 'active-male');
+      if (currentFilterGender === 'female' && unlocked) {
+        genderFilterBtn.classList.add('active-female');
+        genderFilterIcon.innerText = '👩';
+        genderFilterLabel.innerText = 'Female';
+        genderFilterLock.style.display = 'none';
+      } else if (currentFilterGender === 'male' && unlocked) {
+        genderFilterBtn.classList.add('active-male');
+        genderFilterIcon.innerText = '👨';
+        genderFilterLabel.innerText = 'Male';
+        genderFilterLock.style.display = 'none';
+      } else {
+        currentFilterGender = 'all';
+        genderFilterIcon.innerText = '👥';
+        genderFilterLabel.innerText = 'All';
+        genderFilterLock.style.display = unlocked ? 'none' : 'inline-block';
+      }
+
+      // Update menu badges
+      if (unlocked) {
+        femaleBadge.className = 'opt-badge unlocked';
+        femaleBadge.innerText = '✓ Unlocked';
+        maleBadge.className = 'opt-badge unlocked';
+        maleBadge.innerText = '✓ Unlocked';
+      } else {
+        femaleBadge.className = 'opt-badge locked';
+        femaleBadge.innerText = '🔒 Locked';
+        maleBadge.className = 'opt-badge locked';
+        maleBadge.innerText = '🔒 Locked';
+      }
+
+      // Update active class in menu items
+      document.querySelectorAll('.filter-menu-item').forEach(item => {
+        const g = item.getAttribute('data-gender');
+        if (g === currentFilterGender) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+    }
+
+    // Toggle menu
+    genderFilterBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = genderFilterMenu.style.display === 'flex';
+      genderFilterMenu.style.display = isOpen ? 'none' : 'flex';
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!genderFilterMenu.contains(e.target) && e.target !== genderFilterBtn) {
+        genderFilterMenu.style.display = 'none';
+      }
+    });
+
+    // Menu option click
+    document.querySelectorAll('.filter-menu-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const gender = item.getAttribute('data-gender');
+        genderFilterMenu.style.display = 'none';
+
+        if (gender === 'all') {
+          currentFilterGender = 'all';
+          localStorage.setItem(SELECTED_FILTER_KEY, 'all');
+          updateFilterUI();
+          if (window.chatApp && typeof window.chatApp.updateGenderFilter === 'function') {
+            window.chatApp.updateGenderFilter();
+          }
+          return;
+        }
+
+        // If female or male, check if unlocked
+        if (isGenderFilterUnlocked()) {
+          currentFilterGender = gender;
+          localStorage.setItem(SELECTED_FILTER_KEY, gender);
+          updateFilterUI();
+          if (window.chatApp && typeof window.chatApp.updateGenderFilter === 'function') {
+            window.chatApp.updateGenderFilter();
+          }
+        } else {
+          // Locked -> Open VIP Subscription Modal with Cryptomus Payment
+          openVipModal(gender);
+        }
+      });
+    });
+
+    let selectedVipPlan = '1_year';
+    let selectedVipAmount = 85;
+    let pendingTargetGender = 'female';
+
+    function openVipModal(gender) {
+      pendingTargetGender = gender || 'female';
+      const modal = document.getElementById('vipModal');
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closeVipModal() {
+      const modal = document.getElementById('vipModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function selectVipPlan(plan, amount, element) {
+      selectedVipPlan = plan;
+      selectedVipAmount = amount;
+
+      document.querySelectorAll('.vip-plan-card').forEach(card => {
+        card.style.borderColor = '#e2e8f0';
+        card.style.background = '#ffffff';
+        const radio = card.querySelector('input[type="radio"]');
+        if (radio) radio.checked = false;
+      });
+
+      if (element) {
+        element.style.borderColor = '#7c3aed';
+        element.style.background = '#f5f3ff';
+        const radio = element.querySelector('input[type="radio"]');
+        if (radio) radio.checked = true;
+      }
+
+      const btnText = document.querySelector('#payVipBtn span:first-child');
+      if (btnText) {
+        btnText.innerText = `Proceed to Payment ($${amount})`;
+      }
+    }
+
+    async function proceedToCryptomusPayment() {
+      const user = (typeof window.getGoogleUser === 'function') ? window.getGoogleUser() : (JSON.parse(localStorage.getItem('google_user') || 'null'));
+      let email = user?.email || localStorage.getItem('user_email');
+      if (!email) {
+        email = prompt('Enter your email address for subscription confirmation:');
+      }
+      if (!email) return;
+
+      localStorage.setItem('user_email', email);
+
+      const payBtn = document.getElementById('payVipBtn');
+      if (payBtn) payBtn.disabled = true;
+
+      try {
+        const res = await fetch('/api/payment/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            plan: selectedVipPlan,
+            email,
+            userId: user?.id || email
+          })
+        });
+
+        const data = await res.json();
+        if (data && data.success && data.url) {
+          localStorage.setItem('pending_order_id', data.orderId);
+          localStorage.setItem('pending_target_gender', pendingTargetGender);
+          window.location.href = data.url;
+        } else {
+          alert('Payment Gateway Error: ' + (data.error || 'Failed to generate checkout link.'));
+          if (payBtn) payBtn.disabled = false;
+        }
+      } catch (err) {
+        console.error('Cryptomus payment error:', err);
+        alert('Network error connecting to payment gateway.');
+        if (payBtn) payBtn.disabled = false;
+      }
+    }
+
+    async function checkUserVipServer() {
+      const user = (typeof window.getGoogleUser === 'function') ? window.getGoogleUser() : (JSON.parse(localStorage.getItem('google_user') || 'null'));
+      const email = user?.email || localStorage.getItem('user_email') || '';
+      if (!email) return false;
+
+      try {
+        const res = await fetch(`/api/payment/vip-status?email=${encodeURIComponent(email)}`);
+        const data = await res.json();
+        if (data && data.isVip) {
+          localStorage.setItem('omegooo_gender_unlocked', 'true');
+          localStorage.setItem('omegooo_vip_active', 'true');
+          updateFilterUI();
+          return true;
+        }
+      } catch (e) {}
+      return false;
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isPaymentReturn = urlParams.get('payment') === 'success';
+      const orderId = urlParams.get('order_id') || localStorage.getItem('pending_order_id');
+
+      if (isPaymentReturn && orderId) {
+        try {
+          const res = await fetch(`/api/payment/status/${orderId}`);
+          const data = await res.json();
+          if (data && (data.status === 'paid' || data.status === 'active')) {
+            localStorage.setItem('omegooo_gender_unlocked', 'true');
+            localStorage.setItem('omegooo_vip_active', 'true');
+
+            const targetGender = localStorage.getItem('pending_target_gender') || 'female';
+            localStorage.setItem(SELECTED_FILTER_KEY, targetGender);
+            currentFilterGender = targetGender;
+            updateFilterUI();
+
+            alert('🎉 VIP Subscription Activated! Gender filter has been unlocked successfully.');
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            if (window.chatApp && typeof window.chatApp.updateGenderFilter === 'function') {
+              window.chatApp.updateGenderFilter();
+            }
+          }
+        } catch (e) {
+          console.warn("Payment status verification error:", e);
+        }
+      }
+
+      checkUserVipServer();
+      updateFilterUI();
+    });
+  </script>
+
+  <!-- VIP Gender Filter Subscription Modal -->
+  <div id="vipModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); z-index: 999999; align-items: center; justify-content: center; padding: 16px;">
+    <div style="background: #ffffff; color: #0f172a; border-radius: 24px; width: 100%; max-width: 480px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 1px solid #e2e8f0; position: relative; animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
+      
+      <button type="button" onclick="closeVipModal()" style="position: absolute; top: 16px; right: 16px; background: #f1f5f9; border: none; color: #64748b; width: 36px; height: 36px; border-radius: 50%; font-size: 18px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+        ✕
+      </button>
+
+      <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 32px 24px 24px; text-align: center; color: #ffffff;">
+        <div style="width: 64px; height: 64px; background: rgba(255,255,255,0.2); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 32px; backdrop-filter: blur(10px);">
+          👑
+        </div>
+        <h2 style="font-size: 24px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.5px;">
+          Unlock Gender Filter
+        </h2>
+        <p style="font-size: 14px; opacity: 0.9; margin: 0; font-weight: 500;">
+          Select your VIP plan to filter chat partners by gender (Female / Male) instantly!
+        </p>
+      </div>
+
+      <div style="padding: 24px;">
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+          
+          <!-- 1 Month Plan -->
+          <label class="vip-plan-card" style="display: flex; align-items: center; justify-content: space-between; padding: 16px; border: 2px solid #e2e8f0; border-radius: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectVipPlan('1_month', 15, this)">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <input type="radio" name="vipPlan" value="1_month" style="width: 18px; height: 18px; accent-color: #7c3aed;">
+              <div>
+                <div style="font-weight: 800; font-size: 16px; color: #0f172a;">1 Month VIP</div>
+                <div style="font-size: 12px; color: #64748b;">30 Days Unlimited Access</div>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-weight: 800; font-size: 20px; color: #7c3aed;">$15</div>
+              <div style="font-size: 11px; color: #64748b;">/month</div>
+            </div>
+          </label>
+
+          <!-- 3 Months Plan -->
+          <label class="vip-plan-card" style="display: flex; align-items: center; justify-content: space-between; padding: 16px; border: 2px solid #e2e8f0; border-radius: 16px; cursor: pointer; transition: all 0.2s;" onclick="selectVipPlan('3_months', 35, this)">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <input type="radio" name="vipPlan" value="3_months" style="width: 18px; height: 18px; accent-color: #7c3aed;">
+              <div>
+                <div style="font-weight: 800; font-size: 16px; color: #0f172a; display: flex; align-items: center; gap: 6px;">
+                  3 Months VIP <span style="background: #dcfce7; color: #166534; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 12px;">Save 22%</span>
+                </div>
+                <div style="font-size: 12px; color: #64748b;">90 Days Access</div>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-weight: 800; font-size: 20px; color: #7c3aed;">$35</div>
+              <div style="font-size: 11px; color: #64748b;">$11.6/mo</div>
+            </div>
+          </label>
+
+          <!-- 1 Year Plan (BEST VALUE) -->
+          <label class="vip-plan-card selected" style="display: flex; align-items: center; justify-content: space-between; padding: 16px; border: 2px solid #7c3aed; background: #f5f3ff; border-radius: 16px; cursor: pointer; transition: all 0.2s; position: relative;" onclick="selectVipPlan('1_year', 85, this)">
+            <div style="position: absolute; top: -10px; right: 16px; background: #7c3aed; color: #ffffff; font-size: 10px; font-weight: 800; padding: 2px 10px; border-radius: 12px; text-transform: uppercase;">
+              ⭐ Best Value (Save 52%)
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <input type="radio" name="vipPlan" value="1_year" checked style="width: 18px; height: 18px; accent-color: #7c3aed;">
+              <div>
+                <div style="font-weight: 800; font-size: 16px; color: #0f172a;">1 Year VIP</div>
+                <div style="font-size: 12px; color: #64748b;">365 Days Access</div>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-weight: 800; font-size: 20px; color: #7c3aed;">$85</div>
+              <div style="font-size: 11px; color: #64748b;">$7.0/mo</div>
+            </div>
+          </label>
+
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 20px; font-size: 12px; color: #64748b; font-weight: 600;">
+          <span>💳 Visa / Mastercard</span>
+          <span>•</span>
+          <span>🪙 Crypto (USDT, BTC, ETH)</span>
+        </div>
+
+        <button id="payVipBtn" type="button" onclick="proceedToCryptomusPayment()" style="width: 100%; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: #ffffff; border: none; padding: 16px; border-radius: 16px; font-weight: 800; font-size: 16px; cursor: pointer; box-shadow: 0 10px 25px rgba(124, 58, 237, 0.4); display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.2s;">
+          <span>Proceed to Payment ($85)</span>
+        </button>
+
+        <p style="font-size: 11px; color: #94a3b8; text-align: center; margin: 14px 0 0;">
+          🔒 Secure 256-bit encrypted checkout powered by Cryptomus. Instant activation after payment.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Report User Modal Overlay -->
+  <div id="reportModal" class="report-modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.82); backdrop-filter: blur(5px); z-index: 99999; align-items: center; justify-content: center; padding: 16px;">
+    <div class="report-modal-card" style="background: #ffffff; border-radius: 16px; width: 100%; max-width: 440px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 1px solid #e2e8f0; animation: modalPop 0.2s ease-out;">
+      <div style="background: #ef4444; color: #ffffff; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 20;">
+        <div style="font-weight: 800; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+          <span>🚨</span>
+          <span>Report Stranger</span>
+        </div>
+        <button type="button" id="closeReportModalBtn" onclick="closeReportModal()" style="background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.4); color: #ffffff; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px;" title="Close Window">✕ Close</button>
+      </div>
+      <div style="padding: 20px;">
+        <p style="font-size: 14px; color: #334155; margin-bottom: 14px; font-weight: 600;">Select the reason for reporting this user:</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+          <label style="display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: #1e293b;">
+            <input type="radio" name="reportReason" value="Nudity/NSFW Content" checked> 🔞 Nudity or Inappropriate Camera Stream
+          </label>
+          <label style="display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: #1e293b;">
+            <input type="radio" name="reportReason" value="Harassment or Bullying"> 🤬 Harassment, Hate Speech, or Bad Behavior
+          </label>
+          <label style="display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: #1e293b;">
+            <input type="radio" name="reportReason" value="Spam or Advertising"> 📢 Spam, Scams, or Commercial Ads
+          </label>
+          <label style="display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: #1e293b;">
+            <input type="radio" name="reportReason" value="Underage User"> 🔞 Underage / Minor Violation
+          </label>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="button" onclick="submitReportModal()" style="flex: 1; background: #ef4444; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer;">Submit Report</button>
+          <button type="button" onclick="closeReportModal()" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 12px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer;">Close Window</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Discord Join Community Modal Overlay -->
+  <div id="discordJoinModal" class="discord-modal-overlay" style="display: flex; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(6px); z-index: 999999; align-items: center; justify-content: center; padding: 16px;">
+    <div class="discord-modal-card" style="background: #1e1f22; color: #ffffff; border-radius: 20px; width: 100%; max-width: 440px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); border: 1px solid #2b2d31; text-align: center; position: relative; animation: modalPop 0.25s ease-out;">
+      <button type="button" onclick="closeDiscordModal()" style="position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.1); border: none; color: #b5bac1; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px;" title="Close Window" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+        ✕ Close
+      </button>
+      
+      <div style="padding: 32px 24px 24px;">
+        <!-- Discord Logo Icon -->
+        <a href="https://discord.gg/dtjrcWUCa" target="_blank" rel="noopener noreferrer" style="display: inline-block; text-decoration: none;" title="Join Discord Server">
+          <div style="width: 72px; height: 72px; background: #5865F2; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 10px 25px rgba(88,101,242,0.45); cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
+            <svg width="44" height="44" viewBox="0 0 127.14 96.36" fill="#ffffff">
+              <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74C48.74,40.23,53.88,46,53.88,53S48.74,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74C91,40.23,96.11,46,96.11,53S91,65.69,84.69,65.69Z"/>
+            </svg>
+          </div>
+        </a>
+
+        <h2 style="font-size: 22px; font-weight: 800; margin: 0 0 10px; color: #ffffff; letter-spacing: -0.3px;">
+          Join Our Discord Server!
+        </h2>
+        <p style="font-size: 14px; color: #949ba4; margin: 0 0 24px; line-height: 1.6; font-weight: 500;">
+          Join our active community to chat with other members, share feedback, report issues, and get priority updates.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <a href="https://discord.gg/dtjrcWUCa" target="_blank" rel="noopener noreferrer" onclick="closeDiscordModal()" style="background: #5865F2; color: #ffffff; text-decoration: none; padding: 14px 20px; border-radius: 12px; font-weight: 700; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 6px 20px rgba(88,101,242,0.4); transition: all 0.2s;" onmouseover="this.style.background='#4752C4'" onmouseout="this.style.background='#5865F2'">
+            <svg width="22" height="22" viewBox="0 0 127.14 96.36" fill="#ffffff">
+              <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74C48.74,40.23,53.88,46,53.88,53S48.74,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5-12.74,11.44-12.74C91,40.23,96.11,46,96.11,53S91,65.69,84.69,65.69Z"/>
+            </svg>
+            <span>Join Discord Server</span>
+          </a>
+
+          <button type="button" onclick="closeDiscordModal()" style="background: transparent; color: #949ba4; border: 1px solid #35363c; padding: 12px; border-radius: 12px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.color='#ffffff'; this.style.borderColor='#4e5058'" onmouseout="this.style.color='#949ba4'; this.style.borderColor='#35363c'">
+            Maybe Later
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function closeDiscordModal() {
+      const modal = document.getElementById('discordJoinModal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+      sessionStorage.setItem('omegooo_discord_closed', 'true');
+    }
+
+    // Auto-display modal upon entering chat unless closed in current session
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (sessionStorage.getItem('omegooo_discord_closed') === 'true') {
+        const modal = document.getElementById('discordJoinModal');
+        if (modal) modal.style.display = 'none';
+      }
+
+      // Check Google Auth session
+      if (typeof checkActiveSession === 'function') {
+        const user = await checkActiveSession();
+        if (!user && typeof showGoogleLoginModal === 'function') {
+          showGoogleLoginModal();
+        }
+      }
+    });
+  </script>
+</body>
+</html>

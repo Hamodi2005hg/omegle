@@ -1,0 +1,6 @@
+{
+  "name": "Omegooo.com",
+  "description": "Secure Random Video Chat with NSFWJS Monitoring, IP Restriction and Admin Panel",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
