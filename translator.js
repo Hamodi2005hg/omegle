@@ -1,6 +1,6 @@
 /**
  * Omegooo Universal Auto-Translation & Language Switcher
- * Real-time IP location detection, Google Translate trigger, and non-intrusive UI positioning.
+ * Real-time IP location detection, Google Translate trigger, and header / floating UI positioning.
  */
 
 (function () {
@@ -11,7 +11,7 @@
     { code: 'en', name: 'English', flag: '🇺🇸' },
     { code: 'fr', name: 'Français (French)', flag: '🇫🇷' },
     { code: 'es', name: 'Español (Spanish)', flag: '🇪🇸' },
-    { code: 'he', name: 'עבריت (Hebrew)', flag: '🇮🇱' },
+    { code: 'he', name: 'עברית (Hebrew)', flag: '🇮🇱' },
     { code: 'ru', name: 'Русский (Russian)', flag: '🇷🇺' },
     { code: 'de', name: 'Deutsch (German)', flag: '🇩🇪' },
     { code: 'zh-CN', name: '中文 (Chinese)', flag: '🇨🇳' },
@@ -75,7 +75,6 @@
       targetLang = localStorage.getItem(STORAGE_KEY);
     }
 
-    // Always fetch IP location if no explicit manual choice made yet or URL lang specified
     if (!targetLang || !localStorage.getItem(STORAGE_KEY)) {
       try {
         const res = await fetch('/api/detect-language');
@@ -105,25 +104,9 @@
     return targetLang;
   }
 
-  // Inject CSS Styles for Language Switcher
   function injectStyles() {
     const style = document.createElement('style');
-    // Position differently on chat page vs regular landing pages to prevent video overlay interference
-    const positionCSS = IS_CHAT_PAGE ? `
-      .gtrans-switcher-wrap {
-        position: fixed;
-        top: 10px;
-        right: 140px;
-        z-index: 9999999;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      }
-      @media (max-width: 768px) {
-        .gtrans-switcher-wrap {
-          top: 10px;
-          right: 70px;
-        }
-      }
-    ` : `
+    const positionCSS = `
       .gtrans-switcher-wrap {
         position: fixed;
         bottom: 24px;
@@ -131,11 +114,18 @@
         z-index: 9999999;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       }
-    `;
-
-    style.innerHTML = positionCSS + `
+      .gtrans-switcher-wrap.in-nav {
+        position: relative;
+        top: auto;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        z-index: 1000;
+        display: inline-flex;
+        align-items: center;
+      }
       .gtrans-btn {
-        background: #0f172a;
+        background: #1e293b;
         color: #ffffff;
         border: 1.5px solid rgba(255,255,255,0.25);
         padding: 6px 12px;
@@ -146,18 +136,20 @@
         display: flex;
         align-items: center;
         gap: 6px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25);
         transition: all 0.2s ease;
         user-select: none;
+        white-space: nowrap;
       }
       .gtrans-btn:hover {
-        background: #1e293b;
+        background: #334155;
         border-color: #3b82f6;
       }
       .gtrans-dropdown {
         display: none;
         position: absolute;
-        ${IS_CHAT_PAGE ? 'top: calc(100% + 8px); right: 0;' : 'bottom: calc(100% + 8px); right: 0;'}
+        bottom: calc(100% + 8px);
+        right: 0;
         width: 190px;
         max-height: 280px;
         overflow-y: auto;
@@ -168,6 +160,13 @@
         padding: 6px;
         flex-direction: column;
         gap: 2px;
+        z-index: 9999999;
+      }
+      .gtrans-switcher-wrap.in-nav .gtrans-dropdown {
+        top: calc(100% + 8px);
+        bottom: auto;
+        right: 0;
+        left: auto;
       }
       .gtrans-dropdown.open {
         display: flex;
@@ -199,9 +198,10 @@
 
   function renderLanguageSwitcher(currentLang) {
     const activeLangObj = SUPPORTED_LANGUAGES.find(l => l.code === currentLang) || SUPPORTED_LANGUAGES[0];
+    const navBox = document.getElementById('gtransNavBox');
 
     const wrap = document.createElement('div');
-    wrap.className = 'gtrans-switcher-wrap';
+    wrap.className = 'gtrans-switcher-wrap' + (navBox ? ' in-nav' : '');
 
     const btn = document.createElement('button');
     btn.className = 'gtrans-btn';
@@ -238,7 +238,13 @@
     const container = document.createElement('div');
     container.id = 'google_translate_element';
     document.body.appendChild(container);
-    document.body.appendChild(wrap);
+
+    if (navBox) {
+      navBox.innerHTML = '';
+      navBox.appendChild(wrap);
+    } else {
+      document.body.appendChild(wrap);
+    }
   }
 
   function loadGoogleTranslateScript(currentLang) {

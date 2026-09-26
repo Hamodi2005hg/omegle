@@ -2312,7 +2312,7 @@ io.on("connection", async (socket) => {
     if (waitingQueue.length >= 2) {
       tryMatch();
     }
-  }, 1000);
+  }, 1500);
   
   socket.on("admin-screenshot", async ({ image, partnerId }) => {
     if (!checkSocketRateLimit(socket, 'screenshot', 3, 60000)) return;

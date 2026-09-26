@@ -558,12 +558,12 @@ class ChatApp {
         this.updateStatusMessage('Searching for a stranger...');
         this.safeEmit('stop');
 
-        // Sleep for 1 second, then resume search
+        // Sleep for 1.5 seconds, then resume search
         this.pauseTimer = this.setSafeTimer(() => {
           if (!this.state.partnerId && !this.state.isBanned) {
             this.startSearchLoop();
           }
-        }, 1000);
+        }, 1500);
       }
     }, 5000);
   }
@@ -664,6 +664,7 @@ class ChatApp {
         this.elements.localSpinner.style.display = 'none';
       }
 
+      this.hideReenableMediaButton();
       this.setSkipButtonsDisabled(false);
       this.showRemoteSpinnerOnly(true);
       this.updateMicButton();
@@ -676,9 +677,69 @@ class ChatApp {
         this.elements.localSpinner.style.display = 'none';
       }
       this.hideAllSpinners();
-      this.updateStatusMessage('📹 Camera access required for video chat. Please grant permissions and refresh.');
+      this.updateStatusMessage('📹 Camera & Microphone permission required. Click below to grant access.');
+      this.showReenableMediaButton();
       return false;
     }
+  }
+
+  showReenableMediaButton() {
+    let btn = document.getElementById('reenableMediaBtn');
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.id = 'reenableMediaBtn';
+      btn.type = 'button';
+      btn.innerHTML = '🎥 <span>Enable Camera & Microphone / إعـادة فـتـح الكاميـرا والميكـروفون</span>';
+      btn.style.cssText = `
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: #ffffff;
+        border: none;
+        padding: 14px 22px;
+        border-radius: 14px;
+        font-size: 14px;
+        font-weight: 800;
+        cursor: pointer;
+        z-index: 100;
+        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.5);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+        transition: transform 0.2s, background 0.2s;
+      `;
+      btn.onmouseover = function() { this.style.transform = 'translate(-50%, -50%) scale(1.05)'; };
+      btn.onmouseout = function() { this.style.transform = 'translate(-50%, -50%) scale(1)'; };
+
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+        const ok = await this.initMedia();
+        if (ok) {
+          this.hideReenableMediaButton();
+          this.startSearch();
+        } else {
+          btn.disabled = false;
+          btn.style.opacity = '1';
+        }
+      });
+
+      const videoFrame = document.querySelector('.video-frame.bottom') || document.querySelector('.video-frame.top') || document.querySelector('.left-col');
+      if (videoFrame) {
+        videoFrame.appendChild(btn);
+      } else {
+        document.body.appendChild(btn);
+      }
+    }
+    btn.style.display = 'flex';
+  }
+
+  hideReenableMediaButton() {
+    const btn = document.getElementById('reenableMediaBtn');
+    if (btn) btn.style.display = 'none';
   }
   // =====================================================
   // WebRTC & Connection Stability Management
