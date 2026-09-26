@@ -702,6 +702,50 @@ app.get("/api/payment/vip-status", async (req, res) => {
   return res.json({ success: true, isVip });
 });
 
+// ====== Auto-Language Detection Endpoint ======
+app.get("/api/detect-language", (req, res) => {
+  const ip = realIP(req);
+  const geo = geoip.lookup(ip);
+  const country = geo ? geo.country : null;
+
+  let detectedLang = 'en';
+
+  if (country) {
+    if (country === 'IL') {
+      detectedLang = 'he';
+    } else if (['ES', 'MX', 'AR', 'CO', 'CL', 'PE', 'VE', 'EC', 'GT', 'CU', 'PR', 'BO', 'PY', 'UY', 'CR', 'PA', 'DO', 'SV', 'HN', 'NI'].includes(country)) {
+      detectedLang = 'es';
+    } else if (['RU', 'BY', 'KZ', 'AM', 'AZ', 'KG', 'TJ', 'TM', 'UZ', 'MD'].includes(country)) {
+      detectedLang = 'ru';
+    } else if (['DE', 'AT', 'CH', 'LI'].includes(country)) {
+      detectedLang = 'de';
+    } else if (['FR', 'BE', 'MC', 'LU'].includes(country)) {
+      detectedLang = 'fr';
+    } else if (['CN', 'TW', 'HK', 'MO', 'SG'].includes(country)) {
+      detectedLang = 'zh-CN';
+    } else if (['IT'].includes(country)) {
+      detectedLang = 'it';
+    } else if (['PT', 'BR'].includes(country)) {
+      detectedLang = 'pt';
+    } else if (['TR'].includes(country)) {
+      detectedLang = 'tr';
+    } else if (['JP'].includes(country)) {
+      detectedLang = 'ja';
+    } else if (['KR'].includes(country)) {
+      detectedLang = 'ko';
+    } else if (['SA', 'AE', 'EG', 'IQ', 'JO', 'KW', 'LB', 'MA', 'OM', 'QA', 'TN', 'YE', 'DZ', 'LY', 'SD', 'SY', 'PS', 'BH'].includes(country)) {
+      detectedLang = 'en'; // Explicit user rule: Arab visitors get English by default
+    }
+  }
+
+  return res.json({
+    success: true,
+    country,
+    detectedLang,
+    ip
+  });
+});
+
 app.use(express.static(__dirname));
 
 // Explicit routes for serving HTML pages and SEO assets
