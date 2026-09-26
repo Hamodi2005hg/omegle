@@ -2203,6 +2203,8 @@ io.on("connection", async (socket) => {
     // Clean up any stale partner relationship before re-entering queue
     const oldP = partners.get(socket.id);
     if (oldP) {
+      recordSkip(socket.id, oldP);
+      recordSkip(oldP, socket.id);
       partners.delete(oldP);
       partners.delete(socket.id);
       const other = io.sockets.sockets.get(oldP);
@@ -2217,6 +2219,48 @@ io.on("connection", async (socket) => {
     emitAdminUpdate();
   });
   
+  // ======== Double-Skip 30-Second Avoidance Tracker ========
+  const lastSkippedPartner = new Map(); // socket.id -> lastSkippedSocketId
+  const doubleSkipCooldown = new Map(); // pairKey -> timestamp (expiry)
+
+  function getPairKey(a, b) {
+    return a < b ? `${a}:${b}` : `${b}:${a}`;
+  }
+
+  function recordSkip(a, b) {
+    if (!a || !b || a === b) return;
+    const lastP = lastSkippedPartner.get(a);
+    if (lastP === b) {
+      const key = getPairKey(a, b);
+      doubleSkipCooldown.set(key, Date.now() + 30000); // 30-second cooldown
+      console.log(`[DOUBLE-SKIP-BLOCKED] ${a} & ${b} skipped twice consecutively. Cooldown active for 30s.`);
+    }
+    lastSkippedPartner.set(a, b);
+  }
+
+  function isDoubleSkipBlocked(a, b) {
+    const key = getPairKey(a, b);
+    const expiry = doubleSkipCooldown.get(key);
+    if (!expiry) return false;
+    if (Date.now() >= expiry) {
+      doubleSkipCooldown.delete(key);
+      return false;
+    }
+    return true;
+  }
+
+  function hasOtherCandidateInQueue(sockId, avoidSockId) {
+    for (let k = 0; k < waitingQueue.length; k++) {
+      const candidate = waitingQueue[k];
+      if (candidate === sockId || candidate === avoidSockId) continue;
+      if (!io.sockets.sockets.get(candidate)) continue;
+      if (isGenderCompatible(sockId, candidate) && !isDoubleSkipBlocked(sockId, candidate)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   function isGenderCompatible(a, b) {
     const gA = userGender.get(a) || 'unspecified';
     const fA = userFilterGender.get(a) || 'all';
@@ -2232,6 +2276,11 @@ io.on("connection", async (socket) => {
 
   function getMatchScore(a, b) {
     if (!isGenderCompatible(a, b)) return -1;
+
+    // Double-skip check: if pair skipped twice in a row within 30s, avoid matching if another candidate exists, or until 30s pass
+    if (isDoubleSkipBlocked(a, b)) {
+      return -1;
+    }
 
     const fA = userFilterGender.get(a) || 'all';
     const fB = userFilterGender.get(b) || 'all';
@@ -2539,6 +2588,8 @@ io.on("connection", async (socket) => {
 
     const p = partners.get(socket.id);
     if (p) {
+      recordSkip(socket.id, p);
+      recordSkip(p, socket.id);
       partners.delete(p);
       partners.delete(socket.id);
       const other = io.sockets.sockets.get(p);
