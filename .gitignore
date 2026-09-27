@@ -6,6 +6,8 @@ coverage/
 *.log
 .env*
 !.env.example
+bun.lock
+bun.lockb
 node-compile-cache/
 run/
 .ca3003e4bb96d5b6-0.hm
