@@ -1016,6 +1016,33 @@
     // Alias for backward compatibility
     window.proceedToCryptomusPayment = proceedToPlisioPayment;
 
+    function showPaymentNotification(type, title, message) {
+      let notif = document.getElementById('paymentNotifBanner');
+      if (!notif) {
+        notif = document.createElement('div');
+        notif.id = 'paymentNotifBanner';
+        notif.style.cssText = `position: fixed; top: 24px; left: 50%; transform: translateX(-50%); z-index: 9999999; max-width: 520px; width: 92%; padding: 16px 20px; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.35); display: flex; align-items: center; gap: 14px; font-family: inherit; animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1); color: #ffffff;`;
+        document.body.appendChild(notif);
+      }
+      const isSuccess = type === 'success';
+      notif.style.background = isSuccess ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)' : 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)';
+      notif.innerHTML = `
+        <div style="font-size: 28px; line-height: 1; flex-shrink: 0;">${isSuccess ? '🎉' : '❌'}</div>
+        <div style="flex: 1;">
+          <div style="font-weight: 800; font-size: 16px; margin-bottom: 2px;">${title}</div>
+          <div style="font-size: 13px; opacity: 0.95; line-height: 1.4;">${message}</div>
+        </div>
+        <button type="button" onclick="document.getElementById('paymentNotifBanner').remove()" style="background: rgba(255,255,255,0.2); border: none; color: #fff; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-weight: 700; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">✕</button>
+      `;
+      setTimeout(() => {
+        if (notif && notif.parentNode) {
+          notif.style.opacity = '0';
+          notif.style.transition = 'opacity 0.5s ease';
+          setTimeout(() => notif.remove(), 500);
+        }
+      }, 12000);
+    }
+
     async function checkUserVipServer() {
       const user = (typeof window.getGoogleUser === 'function') ? window.getGoogleUser() : (JSON.parse(localStorage.getItem('google_user') || 'null'));
       const email = user?.email || localStorage.getItem('user_email') || '';
@@ -1025,6 +1052,7 @@
         const res = await fetch(`/api/payment/vip-status?email=${encodeURIComponent(email)}`);
         const data = await res.json();
         if (data && data.isVip) {
+          localStorage.setItem('mylead_gender_filter_unlocked', 'true');
           localStorage.setItem('omegooo_gender_unlocked', 'true');
           localStorage.setItem('omegooo_vip_active', 'true');
           updateFilterUI();
@@ -1036,32 +1064,56 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const isPaymentReturn = urlParams.get('payment') === 'success';
+      const paymentStatus = urlParams.get('payment');
       const orderId = urlParams.get('order_id') || localStorage.getItem('pending_order_id');
 
-      if (isPaymentReturn && orderId) {
-        try {
-          const res = await fetch(`/api/payment/status/${orderId}`);
-          const data = await res.json();
-          if (data && (data.status === 'paid' || data.status === 'active')) {
-            localStorage.setItem('omegooo_gender_unlocked', 'true');
-            localStorage.setItem('omegooo_vip_active', 'true');
-
-            const targetGender = localStorage.getItem('pending_target_gender') || 'female';
-            localStorage.setItem(SELECTED_FILTER_KEY, targetGender);
-            currentFilterGender = targetGender;
-            updateFilterUI();
-
-            alert('🎉 VIP Subscription Activated! Gender filter has been unlocked successfully.');
-            window.history.replaceState({}, document.title, window.location.pathname);
-
-            if (window.chatApp && typeof window.chatApp.updateGenderFilter === 'function') {
-              window.chatApp.updateGenderFilter();
+      if (paymentStatus === 'success') {
+        if (orderId) {
+          try {
+            const res = await fetch(`/api/payment/status/${orderId}`);
+            const data = await res.json();
+            if (data && (data.status === 'paid' || data.status === 'active' || data.status === 'completed')) {
+              // Verified paid
             }
+          } catch (e) {
+            console.warn("Payment status verification error:", e);
           }
-        } catch (e) {
-          console.warn("Payment status verification error:", e);
         }
+
+        // Activate VIP access and unlock gender filter
+        localStorage.setItem('mylead_gender_filter_unlocked', 'true');
+        localStorage.setItem('omegooo_gender_unlocked', 'true');
+        localStorage.setItem('omegooo_vip_active', 'true');
+
+        const targetGender = localStorage.getItem('pending_target_gender') || 'female';
+        localStorage.setItem(SELECTED_FILTER_KEY, targetGender);
+        currentFilterGender = targetGender;
+
+        updateFilterUI();
+
+        showPaymentNotification(
+          'success',
+          'Payment Successful!',
+          'Your VIP subscription has been activated successfully! Male and Female gender filters are now unlocked. Returning you to chat.'
+        );
+
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        if (window.chatApp && typeof window.chatApp.updateGenderFilter === 'function') {
+          window.chatApp.updateGenderFilter();
+        }
+      } else if (paymentStatus === 'failed' || paymentStatus === 'cancel' || paymentStatus === 'canceled') {
+        if (orderId) {
+          fetch(`/api/payment/cancel/${orderId}`, { method: 'POST' }).catch(() => {});
+        }
+
+        showPaymentNotification(
+          'error',
+          'Payment Canceled or Failed',
+          'Your payment process was canceled or failed. The Male and Female gender filters remain locked. You can try again anytime.'
+        );
+
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
 
       checkUserVipServer();

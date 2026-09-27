@@ -387,6 +387,33 @@ async function markSubscriptionPaid(orderId) {
   return sub;
 }
 
+async function markSubscriptionFailed(orderId, failStatus = 'failed') {
+  let subs = [];
+  if (fs.existsSync(SUBSCRIPTIONS_FILE)) {
+    try { subs = JSON.parse(fs.readFileSync(SUBSCRIPTIONS_FILE, 'utf8')); } catch (e) { subs = []; }
+  }
+  let sub = subs.find(s => s.orderId === orderId);
+  if (!sub) return null;
+  sub.status = failStatus;
+  sub.updatedAt = new Date().toISOString();
+  fs.writeFileSync(SUBSCRIPTIONS_FILE, JSON.stringify(subs, null, 2));
+
+  if (supabase) {
+    try {
+      await supabase.from('user_subscriptions').upsert([{
+        order_id: sub.orderId,
+        user_email: sub.email,
+        user_id: sub.userId || sub.email,
+        plan_type: sub.plan,
+        amount: parseFloat(sub.amount),
+        payment_status: failStatus,
+        expires_at: sub.expiresAt || new Date().toISOString()
+      }]);
+    } catch (e) {}
+  }
+  return sub;
+}
+
 async function isUserVip(email, userId) {
   if (!email && !userId) return false;
   const now = Date.now();
@@ -639,13 +666,27 @@ app.post(["/api/payment/webhook", "/api/payment/plisio-webhook"], async (req, re
 
     console.log("Plisio Webhook received:", { orderNumber, status, txn_id: body.txn_id });
 
-    if (orderNumber && (status === 'completed' || status === 'mismatch' || status === 'paid' || status === 'active')) {
-      await markSubscriptionPaid(orderNumber);
+    if (orderNumber) {
+      if (status === 'completed' || status === 'mismatch' || status === 'paid' || status === 'active') {
+        await markSubscriptionPaid(orderNumber);
+      } else if (status === 'expired' || status === 'cancelled' || status === 'error' || status === 'failed') {
+        await markSubscriptionFailed(orderNumber, status);
+      }
     }
     return res.json({ success: true });
   } catch (err) {
     console.error("Webhook error:", err);
     return res.status(500).send("Internal Server Error");
+  }
+});
+
+app.post("/api/payment/cancel/:orderId", async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const sub = await markSubscriptionFailed(orderId, 'cancelled');
+    return res.json({ success: true, status: sub ? sub.status : 'cancelled' });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -666,6 +707,8 @@ app.get("/api/payment/status/:orderId", async (req, res) => {
             const opStatus = (verifyData.data.status || '').toLowerCase();
             if (opStatus === 'completed' || opStatus === 'mismatch' || opStatus === 'paid') {
               sub = await markSubscriptionPaid(orderId);
+            } else if (opStatus === 'expired' || opStatus === 'cancelled' || opStatus === 'error' || opStatus === 'failed') {
+              sub = await markSubscriptionFailed(orderId, opStatus);
             }
           }
         }
