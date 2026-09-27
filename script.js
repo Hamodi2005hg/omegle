@@ -25,7 +25,7 @@ class ChatApp {
       PONG_TIMEOUT: 20000,
       STATS_POLL_MS: 2500,
       TYPING_PAUSE: 1500,
-      SEARCH_TIMEOUT: 4000,
+      SEARCH_TIMEOUT: 5000,
       MAX_CONSECUTIVE_FAILS: 3,
       NORMAL_PAUSE_DURATION: 1500
     };
@@ -454,9 +454,9 @@ class ChatApp {
           if (!this.state.partnerId && !this.state.isBanned) {
             this.startSearchLoop();
           }
-        }, 1500);
+        }, this.config.NORMAL_PAUSE_DURATION);
       }
-    }, 4000);
+    }, this.config.SEARCH_TIMEOUT);
   }
 
   handleLobbyAnnounce(data, senderPeerId) {
