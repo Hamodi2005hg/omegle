@@ -1,8 +1,10 @@
 name = "omegooo"
 compatibility_date = "2024-09-01"
 
-[site]
-bucket = "."
+pages_build_output_dir = "."
+
+[assets]
+directory = "."
 
 # Environment variables for Cloudflare deployments
 [vars]
