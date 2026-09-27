@@ -591,7 +591,13 @@ class ChatApp {
     this.cleanupConnection();
     this.clearSafeTimer(this.searchTimer);
     this.clearSafeTimer(this.pauseTimer);
-    this.startSearchLoop();
+
+    // 1.5 second rest pause before starting next search
+    this.pauseTimer = this.setSafeTimer(() => {
+      if (!this.state.partnerId && !this.state.isBanned) {
+        this.startSearchLoop();
+      }
+    }, this.config.NORMAL_PAUSE_DURATION);
   }
 
   async startSearch() {
@@ -781,9 +787,17 @@ class ChatApp {
 
       this.disableChat();
       this.cleanupConnection();
+      this.showRemoteSpinnerOnly(true);
+      this.updateStatusMessage('Searching for a stranger...');
       this.clearSafeTimer(this.searchTimer);
       this.clearSafeTimer(this.pauseTimer);
-      this.startSearchLoop();
+
+      // 1.5 second rest pause before starting next search
+      this.pauseTimer = this.setSafeTimer(() => {
+        if (!this.state.partnerId && !this.state.isBanned) {
+          this.startSearchLoop();
+        }
+      }, this.config.NORMAL_PAUSE_DURATION);
     };
 
     if (this.elements.skipBtn) this.elements.skipBtn.onclick = handleSkip;
