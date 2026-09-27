@@ -450,6 +450,8 @@ class ChatApp {
 
     this.searchTimer = this.setSafeTimer(() => {
       if (!this.state.partnerId && !this.state.isBanned) {
+        this.showRemoteSpinnerOnly(false);
+        this.updateStatusMessage('Pausing...');
         this.pauseTimer = this.setSafeTimer(() => {
           if (!this.state.partnerId && !this.state.isBanned) {
             this.startSearchLoop();
@@ -586,9 +588,10 @@ class ChatApp {
   handlePartnerDisconnected() {
     if (this.state.isBanned) return;
     this.setSingleSystemMessage('Stranger has disconnected.', 'stranger-disconnected-msg');
-    this.updateStatusMessage('Stranger disconnected. Searching for a new partner...');
+    this.updateStatusMessage('Stranger disconnected. Pausing...');
     this.disableChat();
     this.cleanupConnection();
+    this.showRemoteSpinnerOnly(false);
     this.clearSafeTimer(this.searchTimer);
     this.clearSafeTimer(this.pauseTimer);
 
@@ -787,8 +790,8 @@ class ChatApp {
 
       this.disableChat();
       this.cleanupConnection();
-      this.showRemoteSpinnerOnly(true);
-      this.updateStatusMessage('Searching for a stranger...');
+      this.showRemoteSpinnerOnly(false);
+      this.updateStatusMessage('Pausing...');
       this.clearSafeTimer(this.searchTimer);
       this.clearSafeTimer(this.pauseTimer);
 
