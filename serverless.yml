@@ -1,0 +1,43 @@
+# Serverless Framework Configuration for Omegooo Signaling Server & Express APIs
+service: omegooo-signaling-server
+
+frameworkVersion: '>=3.0.0'
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  stage: ${opt:stage, 'prod'}
+  region: ${opt:region, 'us-east-1'}
+  memorySize: 512
+  timeout: 30
+  environment:
+    NODE_ENV: production
+    ADMIN_USERNAME: ${env:ADMIN_USERNAME, 'admin'}
+    ADMIN_PASSWORD: ${env:ADMIN_PASSWORD, 'admin123'}
+    PLISIO_API_KEY: ${env:PLISIO_API_KEY, ''}
+    GEMINI_API_KEY: ${env:GEMINI_API_KEY, ''}
+    SUPABASE_URL: ${env:SUPABASE_URL, ''}
+    SUPABASE_KEY: ${env:SUPABASE_KEY, ''}
+
+package:
+  patterns:
+    - '!node_modules/geoip-lite/data/geoip-city-names.dat'
+    - '!node_modules/geoip-lite/data/geoip-city.dat'
+    - '!*.md'
+    - '!.git/**'
+
+functions:
+  app:
+    handler: handler.handler
+    events:
+      - http:
+          path: /
+          method: ANY
+          cors: true
+      - http:
+          path: /{proxy+}
+          method: ANY
+          cors: true
+
+plugins:
+  - serverless-offline

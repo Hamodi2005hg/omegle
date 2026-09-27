@@ -8,7 +8,7 @@ Omegooo is a fast, high-performance anonymous video and text chat web applicatio
 - 🎯 **Interest Matching**: Connect with strangers sharing similar interests.
 - 🔒 **VIP Gender Filter**: Unlocked via **Plisio.net** cryptocurrency payments.
 - 🛡️ **Safety & Security**: Automatic profanity filtering, IP rate limiting, report system, and admin panel.
-- ⚡ **Cloudflare Ready**: Built-in support for Cloudflare Tunnels, `CF-Connecting-IP`, Docker, and WebSocket proxies.
+- ⚡ **Cloudflare & Serverless Ready**: Built-in support for Serverless Framework (`serverless`), Cloudflare Tunnels, `CF-Connecting-IP`, Docker, and WebSocket proxies.
 
 ## 🛠️ Quick Start
 
@@ -18,6 +18,18 @@ npm install
 
 # Start the server
 npm start
+```
+
+### ⚡ Serverless Framework Integration (`npm install -g serverless`)
+```bash
+# 1. Install Serverless Framework globally
+npm install -g serverless
+
+# 2. Run offline locally
+npm run serverless:offline
+
+# 3. Deploy to Serverless Cloud
+npm run serverless:deploy
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.

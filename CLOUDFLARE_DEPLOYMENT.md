@@ -64,6 +64,25 @@ docker run -d -p 3000:3000 \
   --name omegooo_container omegooo-app
 ```
 
+### ⚡ الطريقة الرابعة: النشر باستخدام Serverless Framework (`npm install -g serverless`)
+
+يتوفر المشروع مع دمج كامل لخدمة Serverless المجانية لتشغيل خادم الإشارات وواجهات الـ API بدون الحاجة إلى إدارة خوادم:
+
+1. **تثبيت أداة Serverless بشكل عام**:
+   ```bash
+   npm install -g serverless
+   ```
+
+2. **التشغيل التجريبي محلياً (Offline)**:
+   ```bash
+   npm run serverless:offline
+   ```
+
+3. **النشر المجاني بنقرة واحدة على السحابة (AWS Lambda / Serverless Provider)**:
+   ```bash
+   npm run serverless:deploy
+   ```
+
 ---
 
 ## 🔑 متغيرات البيئة المهمة (Environment Variables)
