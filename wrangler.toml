@@ -11,3 +11,10 @@ exclude = ["node_modules/**", "node_modules", ".git/**", "server.js", "Dockerfil
 [vars]
 PORT = "3000"
 NODE_ENV = "production"
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "admin123"
+PLISIO_API_KEY = "cSqDM1bVZd6ElQ3pLQCq2vPJsHEbKazEO2wjE2IaZzQtyiL8IduUeAM2s9c_s6fa"
+GEMINI_API_KEY = ""
+SUPABASE_URL = ""
+SUPABASE_KEY = ""
+ALLOWED_IPS = "197.205.96.254"
