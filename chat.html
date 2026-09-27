@@ -929,7 +929,7 @@
             window.chatApp.updateGenderFilter();
           }
         } else {
-          // Locked -> Open VIP Subscription Modal with Cryptomus Payment
+          // Locked -> Open VIP Subscription Modal with Plisio Payment
           openVipModal(gender);
         }
       });
@@ -974,7 +974,7 @@
       }
     }
 
-    async function proceedToCryptomusPayment() {
+    async function proceedToPlisioPayment() {
       const user = (typeof window.getGoogleUser === 'function') ? window.getGoogleUser() : (JSON.parse(localStorage.getItem('google_user') || 'null'));
       let email = user?.email || localStorage.getItem('user_email');
       if (!email) {
@@ -1008,11 +1008,13 @@
           if (payBtn) payBtn.disabled = false;
         }
       } catch (err) {
-        console.error('Cryptomus payment error:', err);
+        console.error('Plisio payment error:', err);
         alert('Network error connecting to payment gateway.');
         if (payBtn) payBtn.disabled = false;
       }
     }
+    // Alias for backward compatibility
+    window.proceedToCryptomusPayment = proceedToPlisioPayment;
 
     async function checkUserVipServer() {
       const user = (typeof window.getGoogleUser === 'function') ? window.getGoogleUser() : (JSON.parse(localStorage.getItem('google_user') || 'null'));
@@ -1148,12 +1150,12 @@
           <span>🪙 Crypto (USDT, BTC, ETH)</span>
         </div>
 
-        <button id="payVipBtn" type="button" onclick="proceedToCryptomusPayment()" style="width: 100%; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: #ffffff; border: none; padding: 16px; border-radius: 16px; font-weight: 800; font-size: 16px; cursor: pointer; box-shadow: 0 10px 25px rgba(124, 58, 237, 0.4); display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.2s;">
+        <button id="payVipBtn" type="button" onclick="proceedToPlisioPayment()" style="width: 100%; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: #ffffff; border: none; padding: 16px; border-radius: 16px; font-weight: 800; font-size: 16px; cursor: pointer; box-shadow: 0 10px 25px rgba(124, 58, 237, 0.4); display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.2s;">
           <span>Proceed to Payment ($85)</span>
         </button>
 
         <p style="font-size: 11px; color: #94a3b8; text-align: center; margin: 14px 0 0;">
-          🔒 Secure 256-bit encrypted checkout powered by Cryptomus. Instant activation after payment.
+          🔒 Secure crypto payment powered by Plisio.net. Instant activation after payment.
         </p>
       </div>
 

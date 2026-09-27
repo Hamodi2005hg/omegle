@@ -309,16 +309,9 @@ function sanitizeText(str, maxLength = 500) {
     .slice(0, maxLength);
 }
 
-// ====== Cryptomus VIP Subscriptions Management ======
-const CRYPTOMUS_MERCHANT_ID = process.env.CRYPTOMUS_MERCHANT_ID || 'b516be92-5669-488f-9e69-cef9d83c3019';
-const CRYPTOMUS_API_KEY = process.env.CRYPTOMUS_API_KEY || 'lKLFdj4oFOa8pgORFKVQUuqVkAppleIxo00WJjFfKCjEbW1iJRIrS7DSl7akaDpgf0ePUSHZj9ZSG1Lo3ZwUsEn6TROc7XhPQlLQxLQBtnaNby81Ie71LgOON61hSnoK';
+// ====== Plisio VIP Subscriptions Management ======
+const PLISIO_API_KEY = process.env.PLISIO_API_KEY || 'cSqDM1bVZd6ElQ3pLQCq2vPJsHEbKazEO2wjE2IaZzQtyiL8IduUeAM2s9c_s6fa';
 const SUBSCRIPTIONS_FILE = path.join(__dirname, 'subscriptions.json');
-
-function createCryptomusSignature(payload) {
-  const jsonStr = JSON.stringify(payload);
-  const base64Str = Buffer.from(jsonStr).toString('base64');
-  return crypto.createHash('md5').update(base64Str + CRYPTOMUS_API_KEY).digest('hex');
-}
 
 function savePendingSubscription(sub) {
   try {
@@ -561,7 +554,7 @@ app.post("/api/auth/logout", (req, res) => {
   return res.json({ success: true });
 });
 
-// ====== Cryptomus Payment Routes ======
+// ====== Plisio.net Payment Routes ======
 app.post("/api/payment/create", async (req, res) => {
   try {
     let { plan, email, userId } = req.body;
@@ -585,55 +578,51 @@ app.post("/api/payment/create", async (req, res) => {
 
     const orderId = 'VIP_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
     const host = req.get('host');
-    const protocol = req.protocol;
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
     const domain = `${protocol}://${host}`;
 
-    const payload = {
-      amount: amount,
-      currency: "USD",
-      order_id: orderId,
-      url_return: `${domain}/chat.html?payment=success&order_id=${orderId}`,
-      url_callback: `${domain}/api/payment/webhook`,
-      is_payment_multiple: false,
-      lifetime: 3600
-    };
-
-    const signature = createCryptomusSignature(payload);
-
-    savePendingSubscription({
-      orderId,
-      email,
-      userId: userId || email,
-      plan,
-      amount,
-      durationDays,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + durationDays * 86400000).toISOString()
+    const plisioParams = new URLSearchParams({
+      api_key: PLISIO_API_KEY,
+      order_name: `VIP Gender Filter (${plan})`,
+      order_number: orderId,
+      source_currency: 'USD',
+      source_amount: amount,
+      callback_url: `${domain}/api/payment/webhook?json=true`,
+      success_callback_url: `${domain}/api/payment/webhook?json=true`,
+      fail_callback_url: `${domain}/api/payment/webhook?json=true`,
+      success_invoice_url: `${domain}/chat.html?payment=success&order_id=${orderId}`,
+      fail_invoice_url: `${domain}/chat.html?payment=failed&order_id=${orderId}`,
+      email: email
     });
 
-    const response = await fetch('https://api.cryptomus.com/v1/payment', {
-      method: 'POST',
-      headers: {
-        'merchant': CRYPTOMUS_MERCHANT_ID,
-        'sign': signature,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-
+    const response = await fetch(`https://api.plisio.net/api/v1/invoices/new?${plisioParams.toString()}`);
     const data = await response.json();
-    if (data && data.result && data.result.url) {
+
+    if (data && data.status === 'success' && data.data && data.data.invoice_url) {
+      const txnId = data.data.txn_id || null;
+      savePendingSubscription({
+        orderId,
+        txnId,
+        email,
+        userId: userId || email,
+        plan,
+        amount,
+        durationDays,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + durationDays * 86400000).toISOString()
+      });
+
       return res.json({
         success: true,
-        url: data.result.url,
+        url: data.data.invoice_url,
         orderId
       });
     } else {
-      console.error("Cryptomus API error response:", data);
+      console.error("Plisio API error response:", data);
       return res.status(500).json({
         success: false,
-        error: data.message || "Failed to generate Cryptomus payment link"
+        error: (data && data.data && data.data.message) || (data && data.message) || "Failed to generate Plisio payment link"
       });
     }
   } catch (err) {
@@ -642,14 +631,20 @@ app.post("/api/payment/create", async (req, res) => {
   }
 });
 
-app.post("/api/payment/webhook", async (req, res) => {
+app.post(["/api/payment/webhook", "/api/payment/plisio-webhook"], async (req, res) => {
   try {
-    const { order_id, status } = req.body;
-    if (order_id && (status === 'paid' || status === 'paid_over')) {
-      await markSubscriptionPaid(order_id);
+    const body = req.body || {};
+    const orderNumber = body.order_number || body.order_id || body.orderNumber;
+    const status = (body.status || '').toLowerCase();
+
+    console.log("Plisio Webhook received:", { orderNumber, status, txn_id: body.txn_id });
+
+    if (orderNumber && (status === 'completed' || status === 'mismatch' || status === 'paid' || status === 'active')) {
+      await markSubscriptionPaid(orderNumber);
     }
     return res.json({ success: true });
   } catch (err) {
+    console.error("Webhook error:", err);
     return res.status(500).send("Internal Server Error");
   }
 });
@@ -664,23 +659,18 @@ app.get("/api/payment/status/:orderId", async (req, res) => {
 
     if (sub.status === 'pending') {
       try {
-        const payload = { order_id: orderId };
-        const signature = createCryptomusSignature(payload);
-        const verifyRes = await fetch('https://api.cryptomus.com/v1/payment/info', {
-          method: 'POST',
-          headers: {
-            'merchant': CRYPTOMUS_MERCHANT_ID,
-            'sign': signature,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        });
-        const verifyData = await verifyRes.json();
-        if (verifyData && verifyData.result && (verifyData.result.status === 'paid' || verifyData.result.status === 'paid_over')) {
-          sub = await markSubscriptionPaid(orderId);
+        if (sub.txnId) {
+          const verifyRes = await fetch(`https://api.plisio.net/api/v1/operations/${sub.txnId}?api_key=${PLISIO_API_KEY}`);
+          const verifyData = await verifyRes.json();
+          if (verifyData && verifyData.status === 'success' && verifyData.data) {
+            const opStatus = (verifyData.data.status || '').toLowerCase();
+            if (opStatus === 'completed' || opStatus === 'mismatch' || opStatus === 'paid') {
+              sub = await markSubscriptionPaid(orderId);
+            }
+          }
         }
       } catch (e) {
-        console.warn("Cryptomus status verify warning:", e.message);
+        console.warn("Plisio status verify warning:", e.message);
       }
     }
 
