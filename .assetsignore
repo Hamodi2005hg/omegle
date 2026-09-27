@@ -1,0 +1,16 @@
+node_modules
+node_modules/*
+.git
+.git/*
+server.js
+Dockerfile
+docker-compose.yml
+schema.sql
+CLOUDFLARE_DEPLOYMENT.md
+README.md
+package.json
+package-lock.json
+tsconfig.json
+vite.config.ts
+.env
+.env.*
