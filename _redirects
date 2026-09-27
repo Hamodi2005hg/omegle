@@ -1,0 +1,3 @@
+# Cloudflare Redirects Rules
+
+/index.html / 301

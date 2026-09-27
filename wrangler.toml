@@ -1,0 +1,10 @@
+name = "omegooo"
+compatibility_date = "2024-09-01"
+
+[site]
+bucket = "."
+
+# Environment variables for Cloudflare deployments
+[vars]
+PORT = "3000"
+NODE_ENV = "production"
