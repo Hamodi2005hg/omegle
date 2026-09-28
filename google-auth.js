@@ -164,20 +164,29 @@ async function initGoogleAuth(onSuccess) {
       window.google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: (response) => handleGoogleCredentialResponse(response, onSuccess),
-        auto_select: true
+        auto_select: false,
+        use_fedcm_for_prompt: true
       });
 
       // Render button in modal if container exists
       const btnContainer = document.getElementById('googleGisBtnContainer');
       if (btnContainer) {
         btnContainer.innerHTML = '';
-        window.google.accounts.id.renderButton(btnContainer, {
-          theme: 'outline',
-          size: 'large',
-          text: 'signin_with',
-          shape: 'pill',
-          width: 280
-        });
+        const screenW = window.innerWidth || document.documentElement.clientWidth || 360;
+        const targetWidth = Math.min(300, Math.max(200, screenW - 80));
+
+        try {
+          window.google.accounts.id.renderButton(btnContainer, {
+            theme: 'outline',
+            size: 'large',
+            text: 'signin_with',
+            shape: 'pill',
+            width: targetWidth,
+            logo_alignment: 'left'
+          });
+        } catch(rErr) {
+          console.warn("GIS renderButton warning:", rErr);
+        }
       }
 
       // Prompt One Tap
@@ -203,56 +212,72 @@ function showGoogleLoginModal(onSuccessCallback) {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 12px;
+      box-sizing: border-box;
+      -webkit-overflow-scrolling: touch;
     `;
 
+    modal.onclick = (e) => {
+      if (e.target === modal) closeGoogleLoginModal();
+    };
+
     modal.innerHTML = `
-      <div style="
+      <div id="googleLoginCard" style="
         background: #ffffff;
         width: 100%;
-        max-width: 420px;
+        max-width: 400px;
         border-radius: 20px;
         box-shadow: 0 25px 50px -12px rgba(0,0,0,0.35);
-        padding: 32px 28px;
+        padding: 28px 20px;
         text-align: center;
         position: relative;
         animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        font-family: system-ui, -apple-system, sans-serif;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        box-sizing: border-box;
+        max-height: 90vh;
+        overflow-y: auto;
       ">
         <style>
           @keyframes modalPop {
             from { opacity: 0; transform: scale(0.92) translateY(10px); }
             to { opacity: 1; transform: scale(1) translateY(0); }
           }
+          @media (max-width: 480px) {
+            #googleLoginCard {
+              padding: 22px 14px !important;
+              border-radius: 16px !important;
+            }
+          }
         </style>
 
         <button onclick="closeGoogleLoginModal()" style="
-          position: absolute; top: 16px; right: 16px;
+          position: absolute; top: 14px; right: 14px;
           background: #f1f5f9; border: none; width: 32px; height: 32px;
           border-radius: 50%; color: #64748b; font-size: 18px; font-weight: bold;
           cursor: pointer; display: flex; align-items: center; justify-content: center;
+          touch-action: manipulation;
         ">✕</button>
 
-        <div style="margin-bottom: 20px;">
-          <img src="/logo-icon.svg" alt="Omegooo" style="height: 48px; margin-bottom: 12px;" onerror="this.style.display='none'">
-          <h2 style="font-size: 22px; font-weight: 800; color: #0f172a; margin-bottom: 8px;">Sign In to Start Chatting</h2>
-          <p style="font-size: 14px; color: #64748b; line-height: 1.5; margin: 0;">
-            Sign in with your Google account to enter the chat room. Your session will be saved for <strong>15 days</strong>.
+        <div style="margin-bottom: 16px;">
+          <img src="/logo-icon.svg" alt="Omegooo" style="height: 42px; margin-bottom: 10px;" onerror="this.style.display='none'">
+          <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Sign In to Start Chatting</h2>
+          <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin: 0;">
+            Sign in with your Google account to enter the video chat room. Your session stays active for <strong>15 days</strong>.
           </p>
         </div>
 
-        <div style="background: #fffcf9; border: 1px solid #ffedd5; border-radius: 12px; padding: 12px; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; text-align: left;">
-          <span style="font-size: 20px;">🔒</span>
-          <span style="font-size: 12px; color: #9a3412; font-weight: 500;">
-            Zero password required. Verified profile picture will be shown next to your chat messages.
+        <div style="background: #fffcf9; border: 1px solid #ffedd5; border-radius: 12px; padding: 10px 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; text-align: left;">
+          <span style="font-size: 18px;">🔒</span>
+          <span style="font-size: 12px; color: #9a3412; font-weight: 500; line-height: 1.4;">
+            Zero password required. Verified profile picture will be displayed in chat.
           </span>
         </div>
 
-        <div id="googleGisBtnContainer" style="display: flex; justify-content: center; margin-bottom: 16px; min-height: 44px;">
+        <div id="googleGisBtnContainer" style="display: flex; justify-content: center; align-items: center; margin-bottom: 16px; min-height: 44px; width: 100%;">
           <!-- Google Sign-In Button renders here -->
         </div>
 
-        <p style="font-size: 12px; color: #94a3b8; margin-top: 16px;">
+        <p style="font-size: 12px; color: #94a3b8; margin-top: 14px; line-height: 1.5;">
           By signing in, you agree to our <a href="#" onclick="openPolicyModal('terms'); return false;" style="color: #ff6600; text-decoration: underline;">Terms</a> & <a href="#" onclick="openPolicyModal('privacy'); return false;" style="color: #ff6600; text-decoration: underline;">Privacy Policy</a>.
         </p>
       </div>
