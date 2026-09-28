@@ -1165,8 +1165,9 @@ class ChatApp {
   async initNSFWJS() {
     let attempts = 0;
     const modelEndpoints = [
-      'https://cdn.jsdelivr.net/npm/nsfwjs-models@1.0.0/mobile_net_v2/',
-      'https://unpkg.com/nsfwjs-models@1.0.0/mobile_net_v2/'
+      'https://cdn.jsdelivr.net/gh/infinitered/nsfwjs@2.4.2/example/nsfw_demo/public/quant_nsfw_mobilenet/',
+      'https://cdn.jsdelivr.net/gh/infinitered/nsfwjs@2.4.2/example/nsfw_demo/public/mobilenet_v2/',
+      'https://cdn.jsdelivr.net/npm/nsfwjs-models@1.0.0/mobile_net_v2/'
     ];
 
     const loadModel = async () => {
@@ -1180,21 +1181,12 @@ class ChatApp {
         try {
           this.nsfwModel = await window.nsfwjs.load(endpoint, { type: 'graph' });
           if (this.nsfwModel) {
-            console.log("NSFWJS AI Model loaded successfully via CDN endpoint.");
+            console.log("[AI] NSFWJS model loaded successfully via jsDelivr CDN.");
             this.startNSFWLoop();
             return;
           }
         } catch (e) {}
       }
-
-      try {
-        this.nsfwModel = await window.nsfwjs.load();
-        if (this.nsfwModel) {
-          console.log("NSFWJS AI Model loaded successfully.");
-          this.startNSFWLoop();
-          return;
-        }
-      } catch (e) {}
     };
     loadModel();
   }
