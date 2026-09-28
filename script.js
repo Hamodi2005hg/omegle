@@ -1,33 +1,19 @@
 // =====================================================
-// Connection Management System - Trystero P2P Chat
-// 100% Serverless WebRTC Video Chat (0€ Running Cost)
+// Omegooo Chat Engine - Direct Socket.io WebRTC
+// High performance, instant matchmaking, 100% reliable
 // =====================================================
 
-// Regex to detect external URLs and web links in chat
 const LINK_REGEX = /(?:https?:\/\/|ftp:\/\/|www\.)[^\s]+|(?:\b[a-zA-Z0-9-]+\.)+(?:com|net|org|edu|gov|io|ai|co|xyz|me|info|biz|ru|cn|uk|de|online|site|app|top|club|vip|live|tv|cc|ly|gg|link|click|space|shop|store|dev|pro|icu|buzz)\b(?:\/[^\s]*)?|(?:t\.me|wa\.me|discord\.gg|telegram\.me|bit\.ly|tinyurl\.com)\/[^\s]+/i;
 
 class ChatApp {
   constructor() {
-    this.appId = 'omegooo-torrent-v1';
-    this.lobbyRoomName = 'omegooo-public-lobby-v1';
-    this.myPeerId = 'p_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now().toString(36);
-
-    // Dummy socket wrapper for backward compatibility
-    this.socket = {
-      id: this.myPeerId,
-      connected: true,
-      on: () => {},
-      emit: () => {}
-    };
+    this.socket = null;
+    this.pc = null;
 
     this.config = {
-      PING_INTERVAL: 4000,
-      PONG_TIMEOUT: 20000,
-      STATS_POLL_MS: 2500,
-      TYPING_PAUSE: 1500,
       SEARCH_TIMEOUT: 5000,
-      MAX_CONSECUTIVE_FAILS: 3,
-      NORMAL_PAUSE_DURATION: 1500
+      NORMAL_PAUSE_DURATION: 1500,
+      TYPING_PAUSE: 1500
     };
 
     this.state = {
@@ -36,9 +22,6 @@ class ChatApp {
       isInitiator: false,
       micEnabled: true,
       isBanned: false,
-      consecutiveSearchFails: 0,
-      partnerVideoReady: false,
-      localVideoReadySent: false,
       isOfferOpen: false,
       partnerAvatar: 'https://ui-avatars.com/api/?name=Stranger&background=ff6600&color=fff',
       partnerName: 'Stranger',
@@ -51,16 +34,8 @@ class ChatApp {
     this.searchTimer = null;
     this.pauseTimer = null;
     this.typingTimer = null;
-    this.skippedPeerFallbackTimer = null;
 
     this.reportedIds = new Set();
-    this.reportCounts = new Map();
-
-    this.lobby = null;
-    this.currentRoom = null;
-    this.roomActions = {};
-    this.lobbyActions = {};
-
     this.typing = false;
 
     this.init();
@@ -77,17 +52,13 @@ class ChatApp {
     this.updateMicButton();
     this.setupChatScrollEffect();
 
-    await this.ensureTrysteroLoaded();
-    this.initLobby();
-
+    await this.initSocket();
     this.startSearch();
     this.initNSFWJS();
   }
 
-  async ensureTrysteroLoaded() {
-    if (window.joinRoom || (window.trystero && window.trystero.joinRoom)) {
-      return true;
-    }
+  async ensureSocketIoLoaded() {
+    if (window.io) return true;
     const loadScript = (url) => new Promise((resolve) => {
       const script = document.createElement('script');
       script.src = url;
@@ -96,79 +67,80 @@ class ChatApp {
       document.head.appendChild(script);
     });
 
-    let loaded = await loadScript('https://cdn.jsdelivr.net/npm/trystero@0.22.0/dist/trystero-nostr.min.js');
+    let loaded = await loadScript('/socket.io/socket.io.js');
     if (!loaded) {
-      loaded = await loadScript('https://unpkg.com/trystero@0.22.0/dist/trystero-nostr.min.js');
-    }
-    if (!loaded) {
-      loaded = await loadScript('https://cdn.jsdelivr.net/npm/trystero@0.22.0/dist/trystero-torrent.min.js');
+      loaded = await loadScript('https://cdn.socket.io/4.7.5/socket.io.min.js');
     }
     return loaded;
   }
 
-  getJoinRoomFn() {
-    if (typeof window.joinRoom === 'function') return window.joinRoom;
-    if (window.trystero && typeof window.trystero.joinRoom === 'function') return window.trystero.joinRoom;
-    return null;
-  }
+  async initSocket() {
+    await this.ensureSocketIoLoaded();
 
-  getRoomConfig() {
-    return {
-      appId: this.appId || 'omegooo_chat_v2',
-      relayUrls: [
-        'wss://relay.damus.io',
-        'wss://nos.lol',
-        'wss://relay.snort.social',
-        'wss://nostr.mom',
-        'wss://relay.nostr.band',
-        'wss://purplepag.es'
-      ],
-      trackerUrls: [
-        'wss://tracker.openwebtorrent.com',
-        'wss://tracker.btorrent.xyz',
-        'wss://tracker.files.fm:7072/announce'
-      ],
-      rtcConfig: {
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-          { urls: 'stun:stun2.l.google.com:19302' },
-          { urls: 'stun:stun3.l.google.com:19302' },
-          { urls: 'stun:stun4.l.google.com:19302' },
-          { urls: 'stun:global.stun.twilio.com:3478' }
-        ]
-      }
-    };
-  }
-
-  initLobby() {
-    const joinRoomFn = this.getJoinRoomFn();
-    if (!joinRoomFn) {
-      console.warn("Trystero joinRoom function not available yet.");
-      setTimeout(() => this.initLobby(), 1000);
-      return;
-    }
-
-    try {
-      this.lobby = joinRoomFn(this.getRoomConfig(), this.lobbyRoomName);
-      
-      const [sendAnnounce, getAnnounce] = this.lobby.makeAction('announce');
-      const [sendInvite, getInvite] = this.lobby.makeAction('invite');
-
-      this.lobbyActions.sendAnnounce = sendAnnounce;
-      this.lobbyActions.sendInvite = sendInvite;
-
-      getAnnounce((data, senderPeerId) => {
-        this.handleLobbyAnnounce(data, senderPeerId);
+    if (window.io) {
+      this.socket = window.io({
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000
       });
 
-      getInvite((data, senderPeerId) => {
-        this.handleLobbyInvite(data, senderPeerId);
+      this.socket.on('connect', () => {
+        console.log('Socket.io connected:', this.socket.id);
+        const fp = localStorage.getItem('user_fp') || this.socket.id;
+        this.socket.emit('identify', { fingerprint: fp });
+
+        if (this.state.partnerId) {
+          this.socket.emit('reclaim-session', { oldSocketId: this.socket.id });
+        }
       });
 
-      console.log('Trystero lobby initialized successfully. Peer ID:', this.myPeerId);
-    } catch (err) {
-      console.error('Error initializing Trystero lobby:', err);
+      this.socket.on('partner-found', (data) => {
+        this.handlePartnerFound(data);
+      });
+
+      this.socket.on('partner-disconnected', () => {
+        this.handlePartnerDisconnected();
+      });
+
+      this.socket.on('signal', (data) => {
+        this.handleSignal(data);
+      });
+
+      this.socket.on('chat-message', (data) => {
+        this.addMessage(data.message, 'them', '', data.avatar || this.state.partnerAvatar);
+      });
+
+      this.socket.on('typing', () => {
+        if (this.typingIndicator) {
+          this.typingIndicator.style.display = 'block';
+          if (this.elements.chatMessages) this.elements.chatMessages.scrollTop = this.elements.chatMessages.scrollHeight;
+        }
+      });
+
+      this.socket.on('stop-typing', () => {
+        if (this.typingIndicator) {
+          this.typingIndicator.style.display = 'none';
+        }
+      });
+
+      this.socket.on('banned', (data) => {
+        this.state.isBanned = true;
+        this.showBanModal({
+          title: data.title || 'Account Suspended',
+          message: data.message || 'You have been temporarily suspended due to policy violations.',
+          offenseCount: data.offenseCount || 1,
+          banDurationHours: data.banDurationHours || 24
+        });
+        this.cleanupConnection();
+        this.disableChat();
+      });
+
+      this.socket.on('chat-warning', (data) => {
+        if (data && data.message) {
+          this.addMessage(data.message, 'system');
+        }
+      });
     }
   }
 
@@ -230,19 +202,17 @@ class ChatApp {
     this.timers.add(timerId);
     return timerId;
   }
+
   clearSafeTimer(timerId) {
     if (timerId) {
       clearTimeout(timerId);
       this.timers.delete(timerId);
     }
   }
+
   clearAllTimers() {
     this.timers.forEach(timerId => clearTimeout(timerId));
     this.timers.clear();
-  }
-
-  safeEmit(event, data) {
-    return true;
   }
 
   // =====================================================
@@ -360,15 +330,6 @@ class ChatApp {
     }
   }
 
-  pushAdminNotification(text) {
-    const item = document.createElement('div');
-    item.className = 'notify-item';
-    item.textContent = text;
-    this.elements.notifyMenu.prepend(item);
-    const empty = this.elements.notifyMenu.querySelector('.notify-empty');
-    if (empty) empty.remove();
-  }
-
   ensureNotifyEmpty() {
     if (this.elements.notifyMenu && this.elements.notifyMenu.children.length === 0) {
       const d = document.createElement('div');
@@ -419,22 +380,14 @@ class ChatApp {
     this.sessionToken++;
     this.clearAllTimers();
 
-    if (this.announceIntervalTimer) {
-      clearInterval(this.announceIntervalTimer);
-      this.announceIntervalTimer = null;
-    }
-
-    if (this.currentRoom) {
+    if (this.pc) {
       try {
-        if (this.roomActions.sendSkip) {
-          this.roomActions.sendSkip({ reason: 'leave' });
-        }
-        this.currentRoom.leave();
+        this.pc.ontrack = null;
+        this.pc.onicecandidate = null;
+        this.pc.close();
       } catch (e) {}
-      this.currentRoom = null;
+      this.pc = null;
     }
-
-    this.roomActions = {};
 
     if (this.elements.remoteVideo) {
       try {
@@ -449,13 +402,134 @@ class ChatApp {
 
     this.state.partnerId = null;
     this.state.isInitiator = false;
-    this.state.partnerVideoReady = false;
-    this.state.localVideoReadySent = false;
   }
 
   // =====================================================
-  // Search & Matchmaking Management
+  // WebRTC Matchmaking & Signaling
   // =====================================================
+  handlePartnerFound(data) {
+    this.sessionToken++;
+    const currentSession = this.sessionToken;
+
+    this.clearAllTimers();
+    this.state.partnerId = data.id;
+    this.state.isInitiator = data.initiator;
+    this.state.partnerAvatar = data.partnerAvatar || 'https://ui-avatars.com/api/?name=Stranger&background=ff6600&color=fff';
+    this.state.partnerName = data.partnerName || 'Stranger';
+
+    this.hideAllSpinners();
+    this.setSingleSystemMessage('Connected with a stranger. Say hello! 👋😊', 'stranger-connected-msg');
+    this.updateStatusMessage("Hello 👋 You've been contacted by a stranger Say hello 😊🤝");
+    this.enableChat();
+
+    this.initPeerConnection(data.id, data.initiator, currentSession);
+  }
+
+  initPeerConnection(partnerId, isInitiator, session) {
+    if (this.pc) {
+      try { this.pc.close(); } catch(e){}
+      this.pc = null;
+    }
+
+    const rtcConfig = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' },
+        { urls: 'stun:global.stun.twilio.com:3478' }
+      ]
+    };
+
+    this.pc = new RTCPeerConnection(rtcConfig);
+
+    if (this.state.localStream) {
+      this.state.localStream.getTracks().forEach(track => {
+        try { this.pc.addTrack(track, this.state.localStream); } catch(e){}
+      });
+    }
+
+    this.pc.ontrack = (event) => {
+      if (this.sessionToken !== session) return;
+      if (this.elements.remoteVideo && event.streams && event.streams[0]) {
+        this.elements.remoteVideo.srcObject = event.streams[0];
+        this.elements.remoteVideo.play().catch(() => {});
+      }
+      this.hideAllSpinners();
+      this.enableChat();
+      this.updateStatusMessage("Hello 👋 You've been contacted by a stranger Say hello 😊🤝");
+    };
+
+    this.pc.onicecandidate = (event) => {
+      if (event.candidate && this.socket && this.state.partnerId === partnerId) {
+        this.socket.emit('signal', {
+          to: partnerId,
+          data: { candidate: event.candidate }
+        });
+      }
+    };
+
+    if (isInitiator) {
+      this.pc.createOffer()
+        .then(offer => this.pc.setLocalDescription(offer))
+        .then(() => {
+          if (this.socket && this.state.partnerId === partnerId) {
+            this.socket.emit('signal', {
+              to: partnerId,
+              data: { sdp: this.pc.localDescription }
+            });
+          }
+        })
+        .catch(err => console.error("Create offer error:", err));
+    }
+  }
+
+  async handleSignal({ from, data }) {
+    if (!this.pc || from !== this.state.partnerId) return;
+
+    try {
+      if (data.sdp) {
+        await this.pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        if (data.sdp.type === 'offer') {
+          const answer = await this.pc.createAnswer();
+          await this.pc.setLocalDescription(answer);
+          if (this.socket && this.state.partnerId === from) {
+            this.socket.emit('signal', {
+              to: from,
+              data: { sdp: this.pc.localDescription }
+            });
+          }
+        }
+      } else if (data.candidate) {
+        await this.pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+      }
+    } catch(e) {
+      console.warn("Signal error:", e);
+    }
+  }
+
+  handlePartnerDisconnected() {
+    if (this.state.isBanned) return;
+    if (this.state.partnerId) {
+      this.state.lastSkippedPeerId = this.state.partnerId;
+      this.state.skipTimestamp = Date.now();
+    }
+    this.setSingleSystemMessage('Stranger has disconnected.', 'stranger-disconnected-msg');
+    this.updateStatusMessage('Searching for a stranger...');
+    this.disableChat();
+    this.cleanupConnection();
+    this.showRemoteSpinnerOnly(false);
+    this.clearSafeTimer(this.searchTimer);
+    this.clearSafeTimer(this.pauseTimer);
+
+    this.pauseTimer = this.setSafeTimer(() => {
+      if (!this.state.partnerId && !this.state.isBanned) {
+        this.startSearchLoop();
+      }
+    }, this.config.NORMAL_PAUSE_DURATION);
+  }
+
   startSearchLoop() {
     if (this.state.isBanned) {
       this.updateStatusMessage('⛔ You have been banned for violating our policy terms. ⚠️');
@@ -468,39 +542,25 @@ class ChatApp {
     this.showRemoteSpinnerOnly(true);
     this.updateStatusMessage('Searching for a stranger...');
 
-    const sendMyAnnounce = () => {
-      if (this.state.partnerId || this.state.isBanned) return;
+    const sendFindPartner = () => {
+      if (this.state.partnerId || this.state.isBanned || !this.socket) return;
       const filterGender = (typeof window.getActiveGenderFilter === 'function') ? window.getActiveGenderFilter() : 'all';
       const user = (typeof window.getGoogleUser === 'function') ? window.getGoogleUser() : (JSON.parse(localStorage.getItem('google_user') || 'null'));
       const avatar = user?.picture || 'https://ui-avatars.com/api/?name=User&background=ff6600&color=fff';
       const name = user?.name || 'User';
       const gender = localStorage.getItem('user_gender') || 'male';
 
-      if (this.lobbyActions.sendAnnounce) {
-        try {
-          this.lobbyActions.sendAnnounce({
-            peerId: this.myPeerId,
-            gender,
-            filterGender,
-            avatar,
-            name,
-            ts: Date.now()
-          });
-        } catch (e) {}
-      }
+      this.socket.emit('find-partner', {
+        interests: [],
+        gender,
+        filterGender,
+        avatar,
+        name,
+        user
+      });
     };
 
-    sendMyAnnounce();
-
-    if (this.announceIntervalTimer) clearInterval(this.announceIntervalTimer);
-    this.announceIntervalTimer = setInterval(() => {
-      if (!this.state.partnerId && !this.state.isBanned) {
-        sendMyAnnounce();
-      } else {
-        clearInterval(this.announceIntervalTimer);
-        this.announceIntervalTimer = null;
-      }
-    }, 1200);
+    sendFindPartner();
 
     this.clearSafeTimer(this.searchTimer);
     this.clearSafeTimer(this.pauseTimer);
@@ -516,189 +576,6 @@ class ChatApp {
         }, this.config.NORMAL_PAUSE_DURATION);
       }
     }, this.config.SEARCH_TIMEOUT);
-  }
-
-  handleLobbyAnnounce(data, senderPeerId) {
-    if (!data || !data.peerId || data.peerId === this.myPeerId) return;
-    if (this.state.partnerId || this.state.isBanned || this.state.isOfferOpen) return;
-    if (this.reportedIds.has(data.peerId)) return;
-
-    const myFilterGender = (typeof window.getActiveGenderFilter === 'function') ? window.getActiveGenderFilter() : 'all';
-    const myGender = localStorage.getItem('user_gender') || 'male';
-
-    if (myFilterGender !== 'all' && data.gender !== myFilterGender) return;
-    if (data.filterGender && data.filterGender !== 'all' && myGender !== data.filterGender) return;
-
-    const isRecentlySkipped = (data.peerId === this.state.lastSkippedPeerId) && (Date.now() - (this.state.skipTimestamp || 0) < 10000);
-
-    const performConnect = () => {
-      if (this.state.partnerId || this.state.isBanned || this.state.isOfferOpen) return;
-
-      const user = (typeof window.getGoogleUser === 'function') ? window.getGoogleUser() : null;
-      const myAvatar = user?.picture || localStorage.getItem('user_avatar') || 'https://ui-avatars.com/api/?name=User&background=ff6600&color=fff';
-      const myName = user?.name || 'User';
-
-      const sortedPeers = [this.myPeerId, data.peerId].sort();
-      const roomName = `omegooo_room_${sortedPeers[0].slice(0, 8)}_${sortedPeers[1].slice(0, 8)}`;
-
-      if (this.myPeerId === sortedPeers[0] && this.lobbyActions.sendInvite) {
-        try {
-          this.lobbyActions.sendInvite({
-            targetPeerId: data.peerId,
-            roomName,
-            initiatorPeerId: this.myPeerId,
-            partnerAvatar: myAvatar,
-            partnerName: myName
-          });
-        } catch (e) {}
-      }
-
-      this.connectToPeerRoom(roomName, data.peerId, (this.myPeerId === sortedPeers[0]), data.avatar, data.name);
-    };
-
-    if (isRecentlySkipped) {
-      this.clearSafeTimer(this.skippedPeerFallbackTimer);
-      this.skippedPeerFallbackTimer = this.setSafeTimer(() => {
-        performConnect();
-      }, 1000);
-    } else {
-      this.clearSafeTimer(this.skippedPeerFallbackTimer);
-      performConnect();
-    }
-  }
-
-  handleLobbyInvite(data, senderPeerId) {
-    if (!data || data.targetPeerId !== this.myPeerId) return;
-    if (this.state.partnerId || this.state.isBanned || this.state.isOfferOpen) return;
-    if (this.reportedIds.has(senderPeerId)) return;
-
-    this.clearSafeTimer(this.skippedPeerFallbackTimer);
-    this.connectToPeerRoom(data.roomName, senderPeerId, false, data.partnerAvatar, data.partnerName);
-  }
-
-  connectToPeerRoom(roomName, partnerPeerId, isInitiator, partnerAvatar, partnerName) {
-    if (this.state.partnerId === partnerPeerId && this.currentRoom) return;
-
-    const joinRoomFn = this.getJoinRoomFn();
-    if (!joinRoomFn) return;
-
-    if (this.announceIntervalTimer) {
-      clearInterval(this.announceIntervalTimer);
-      this.announceIntervalTimer = null;
-    }
-
-    this.cleanupConnection();
-    const currentSession = ++this.sessionToken;
-
-    this.state.partnerId = partnerPeerId;
-    this.state.isInitiator = isInitiator;
-    this.state.partnerAvatar = partnerAvatar || 'https://ui-avatars.com/api/?name=Stranger&background=ff6600&color=fff';
-    this.state.partnerName = partnerName || 'Stranger';
-
-    this.hideAllSpinners();
-    this.setSingleSystemMessage('Connected with a stranger. Say hello! 👋😊', 'stranger-connected-msg');
-    this.updateStatusMessage("Hello 👋 You've been contacted by a stranger Say hello 😊🤝");
-    this.enableChat();
-
-    try {
-      this.currentRoom = joinRoomFn(this.getRoomConfig(), roomName);
-
-      if (this.state.localStream) {
-        try {
-          this.currentRoom.addStream(this.state.localStream);
-        } catch (e) {}
-      }
-
-      this.currentRoom.onPeerJoin((peerId) => {
-        if (this.sessionToken !== currentSession) return;
-        if (this.state.localStream) {
-          try {
-            this.currentRoom.addStream(this.state.localStream);
-          } catch (e) {}
-        }
-      });
-
-      this.currentRoom.onStream((stream, peerId) => {
-        if (this.sessionToken !== currentSession) return;
-        if (this.elements.remoteVideo) {
-          this.elements.remoteVideo.srcObject = stream;
-          this.elements.remoteVideo.play().catch(() => {});
-        }
-        this.hideAllSpinners();
-        this.enableChat();
-        this.updateStatusMessage("Hello 👋 You've been contacted by a stranger Say hello 😊🤝");
-      });
-
-      this.currentRoom.onPeerLeave((peerId) => {
-        if (peerId === this.state.partnerId || !peerId) {
-          this.handlePartnerDisconnected();
-        }
-      });
-
-      const [sendChat, getChat] = this.currentRoom.makeAction('chat');
-      const [sendTyping, getTyping] = this.currentRoom.makeAction('typing');
-      const [sendStopTyping, getStopTyping] = this.currentRoom.makeAction('stopTyping');
-      const [sendSkip, getSkip] = this.currentRoom.makeAction('skip');
-      const [sendReport, getReport] = this.currentRoom.makeAction('report');
-
-      this.roomActions = { sendChat, sendTyping, sendStopTyping, sendSkip, sendReport };
-
-      getChat((data, peerId) => {
-        if (this.sessionToken !== currentSession) return;
-        const msgText = typeof data === 'string' ? data : (data?.message || '');
-        const avatarUrl = typeof data === 'object' ? (data?.avatar || this.state.partnerAvatar) : this.state.partnerAvatar;
-        if (msgText) {
-          this.addMessage(msgText, 'them', '', avatarUrl);
-        }
-      });
-
-      getTyping(() => {
-        if (this.sessionToken !== currentSession) return;
-        if (this.typingIndicator) {
-          this.typingIndicator.style.display = 'block';
-          this.elements.chatMessages.scrollTop = this.elements.chatMessages.scrollHeight;
-        }
-      });
-
-      getStopTyping(() => {
-        if (this.sessionToken !== currentSession) return;
-        if (this.typingIndicator) {
-          this.typingIndicator.style.display = 'none';
-        }
-      });
-
-      getSkip(() => {
-        if (this.sessionToken !== currentSession) return;
-        this.handlePartnerDisconnected();
-      });
-
-    } catch (err) {
-      console.error('Error connecting to Trystero peer room:', err);
-      this.cleanupConnection();
-      this.startSearchLoop();
-    }
-  }
-
-  handlePartnerDisconnected() {
-    if (this.state.isBanned) return;
-    if (this.state.partnerId) {
-      this.state.lastSkippedPeerId = this.state.partnerId;
-      this.state.skipTimestamp = Date.now();
-    }
-    this.setSingleSystemMessage('Stranger has disconnected.', 'stranger-disconnected-msg');
-    this.updateStatusMessage('Stranger disconnected. Searching for a new partner...');
-    this.disableChat();
-    this.cleanupConnection();
-    this.showRemoteSpinnerOnly(false);
-    this.clearSafeTimer(this.searchTimer);
-    this.clearSafeTimer(this.pauseTimer);
-
-    // 1.5 second rest pause before starting next search
-    this.pauseTimer = this.setSafeTimer(() => {
-      if (!this.state.partnerId && !this.state.isBanned) {
-        this.startSearchLoop();
-      }
-    }, this.config.NORMAL_PAUSE_DURATION);
   }
 
   async startSearch() {
@@ -887,8 +764,8 @@ class ChatApp {
         this.state.skipTimestamp = Date.now();
       }
 
-      if (this.roomActions.sendSkip) {
-        try { this.roomActions.sendSkip({ reason: 'skip' }); } catch (e) {}
+      if (this.socket) {
+        try { this.socket.emit('skip'); } catch (e) {}
       }
 
       this.disableChat();
@@ -898,7 +775,6 @@ class ChatApp {
       this.clearSafeTimer(this.searchTimer);
       this.clearSafeTimer(this.pauseTimer);
 
-      // 1.5 second rest pause before starting next search
       this.pauseTimer = this.setSafeTimer(() => {
         if (!this.state.partnerId && !this.state.isBanned) {
           this.startSearchLoop();
@@ -911,6 +787,9 @@ class ChatApp {
     // Exit button
     if (this.elements.exitBtn) {
       this.elements.exitBtn.onclick = () => {
+        if (this.socket) {
+          try { this.socket.emit('stop'); } catch (e) {}
+        }
         this.cleanupConnection();
         if (this.state.localStream) {
           this.state.localStream.getTracks().forEach(t => t.stop());
@@ -938,8 +817,11 @@ class ChatApp {
           return;
         }
 
-        if (this.roomActions.sendReport) {
-          try { this.roomActions.sendReport({ reason: 'reported_by_user' }); } catch (e) {}
+        if (this.socket) {
+          try {
+            this.socket.emit('report', { partnerId: this.state.partnerId, reason: 'reported_by_user' });
+            this.socket.emit('skip');
+          } catch (e) {}
         }
 
         this.reportedIds.add(this.state.partnerId);
@@ -964,15 +846,17 @@ class ChatApp {
     }
 
     const sendTyping = () => {
-      if (!this.state.partnerId || this.state.isBanned) return;
+      if (!this.state.partnerId || this.state.isBanned || !this.socket) return;
       if (!this.typing) {
         this.typing = true;
-        if (this.roomActions.sendTyping) this.roomActions.sendTyping({ typing: true });
+        this.socket.emit('typing', { to: this.state.partnerId });
       }
       this.clearSafeTimer(this.typingTimer);
       this.typingTimer = this.setSafeTimer(() => {
         this.typing = false;
-        if (this.roomActions.sendStopTyping) this.roomActions.sendStopTyping({ typing: false });
+        if (this.socket && this.state.partnerId) {
+          this.socket.emit('stop-typing', { to: this.state.partnerId });
+        }
       }, this.config.TYPING_PAUSE);
     };
 
@@ -985,13 +869,13 @@ class ChatApp {
     const sendMessage = () => {
       if (this.state.isBanned) return;
       const msg = this.elements.chatInput.value.trim();
-      if (!msg || !this.state.partnerId) return;
+      if (!msg || !this.state.partnerId || !this.socket) return;
 
       if (LINK_REGEX.test(msg)) {
         this.addMessage("🚫 Sending links or external URLs is prohibited in chat.", "system");
         this.elements.chatInput.value = '';
         this.typing = false;
-        if (this.roomActions.sendStopTyping) this.roomActions.sendStopTyping({ typing: false });
+        if (this.socket) this.socket.emit('stop-typing', { to: this.state.partnerId });
         return;
       }
 
@@ -999,13 +883,16 @@ class ChatApp {
       const myAvatar = user?.picture || localStorage.getItem('user_avatar') || 'https://ui-avatars.com/api/?name=Me&background=ff6600&color=fff';
       this.addMessage(msg, 'you', '', myAvatar);
 
-      if (this.roomActions.sendChat) {
-        this.roomActions.sendChat({ message: msg, avatar: myAvatar, name: user?.name || 'Me' });
-      }
+      this.socket.emit('chat-message', {
+        to: this.state.partnerId,
+        message: msg,
+        avatar: myAvatar,
+        name: user?.name || 'Me'
+      });
 
       this.elements.chatInput.value = '';
       this.typing = false;
-      if (this.roomActions.sendStopTyping) this.roomActions.sendStopTyping({ typing: false });
+      this.socket.emit('stop-typing', { to: this.state.partnerId });
     };
 
     if (this.elements.sendBtn) this.elements.sendBtn.onclick = sendMessage;
@@ -1077,8 +964,12 @@ class ChatApp {
             }
           });
 
-          if (pornOrSexyProb >= 0.70 || (details.Porn && details.Porn >= 0.60)) {
-            console.warn("NSFW violation detected (>70%):", pornOrSexyProb, details);
+          if (this.socket) {
+            this.socket.emit('nsfw-log', { details });
+          }
+
+          if (pornOrSexyProb >= 0.75 || (details.Porn && details.Porn >= 0.65)) {
+            console.warn("NSFW violation detected (>75%):", pornOrSexyProb, details);
             this.handleNSFWViolation({ probability: pornOrSexyProb, details });
           }
         } catch (err) {}
@@ -1089,12 +980,18 @@ class ChatApp {
   handleNSFWViolation(details = {}) {
     if (this.state.isBanned) return;
     this.state.isBanned = true;
+
+    if (this.socket) {
+      this.socket.emit('nsfw-violation', details);
+    }
+
     this.showBanModal({
       title: 'Account Suspended',
-      message: 'Inappropriate content was detected on your camera. You have been banned for 24 hours to maintain a safe platform.',
+      message: 'Inappropriate content was detected on your camera. You have been banned to maintain community safety.',
       offenseCount: 1,
       banDurationHours: 24
     });
+
     this.cleanupConnection();
     this.disableChat();
     if (this.state.localStream) {
@@ -1142,7 +1039,7 @@ class ChatApp {
     this.state.isOfferOpen = false;
     if (!this.state.partnerId && !this.state.isBanned) {
       this.showRemoteSpinnerOnly(true);
-      this.updateStatusMessage('Searching...');
+      this.updateStatusMessage('Searching for a stranger...');
       this.startSearchLoop();
     }
   }
