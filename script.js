@@ -108,7 +108,7 @@ class ChatApp {
 
       this.peer.on('open', (id) => {
         console.log('[PEERJS] Connected to Peer Cloud. Peer ID:', id);
-        if (!this.state.partnerId && !this.state.isBanned && this.state.localStream) {
+        if (!this.state.partnerId && !this.state.isBanned && this.state.localStream && this.state.localStream.active) {
           this.startSearchLoop();
         }
       });
@@ -205,7 +205,7 @@ class ChatApp {
         this.mqttClient.on('connect', () => {
           console.log('[MQTT] Connected successfully to broker:', brokerUrls[idx]);
           this.mqttClient.subscribe('omegooo/lobby/v2');
-          if (!this.state.partnerId && !this.state.isBanned && this.state.localStream) {
+          if (!this.state.partnerId && !this.state.isBanned && this.state.localStream && this.state.localStream.active) {
             this.startSearchLoop();
           }
         });
@@ -269,6 +269,7 @@ class ChatApp {
   handleLobbyAnnounce(data) {
     if (!data || !data.peerId || data.peerId === this.myPeerId) return;
     if (this.state.partnerId || this.state.isBanned || this.state.isOfferOpen) return;
+    if (!this.state.localStream || !this.state.localStream.active) return;
     if (this.reportedIds.has(data.peerId)) return;
 
     const myFilterGender = (typeof window.getActiveGenderFilter === 'function') ? window.getActiveGenderFilter() : 'all';
@@ -626,6 +627,11 @@ class ChatApp {
     if (this.state.isBanned) {
       this.updateStatusMessage('⛔ You have been banned for violating our policy terms. ⚠️');
       this.showRemoteSpinnerOnly(false);
+      return;
+    }
+
+    if (!this.state.localStream || !this.state.localStream.active) {
+      console.log('[SEARCH] Camera stream not active yet. Search deferred until camera opens.');
       return;
     }
 
