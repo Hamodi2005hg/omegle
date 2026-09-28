@@ -6,6 +6,7 @@
 const LINK_REGEX = /(?:https?:\/\/|ftp:\/\/|www\.)[^\s]+|(?:\b[a-zA-Z0-9-]+\.)+(?:com|net|org|edu|gov|io|ai|co|xyz|me|info|biz|ru|cn|uk|de|online|site|app|top|club|vip|live|tv|cc|ly|gg|link|click|space|shop|store|dev|pro|icu|buzz)\b(?:\/[^\s]*)?|(?:t\.me|wa\.me|discord\.gg|telegram\.me|bit\.ly|tinyurl\.com)\/[^\s]+/i;
 
 const STUN_SERVERS = [
+  { urls: 'stun:stun.cloudflare.com:3478' },
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
   { urls: 'stun:stun2.l.google.com:19302' },
@@ -173,47 +174,56 @@ class ChatApp {
 
     const brokerUrls = [
       'wss://broker.emqx.io:8084/mqtt',
-      'wss://broker.hivemq.com:8000/mqtt'
+      'wss://broker.hivemq.com:8000/mqtt',
+      'wss://test.mosquitto.org:8081/mqtt'
     ];
 
-    try {
-      this.mqttClient = window.mqtt.connect(brokerUrls[0], {
-        clientId: 'cli_' + this.myPeerId,
-        keepalive: 10,
-        clean: true,
-        reconnectPeriod: 2000
-      });
+    let currentBrokerIdx = 0;
 
-      this.mqttClient.on('connect', () => {
-        console.log('[MQTT] Connected to signaling broker!');
-        this.mqttClient.subscribe('omegooo/lobby/v2');
-      });
+    const connectToBroker = (idx) => {
+      if (idx >= brokerUrls.length) idx = 0;
+      currentBrokerIdx = idx;
 
-      this.mqttClient.on('message', (topic, message) => {
-        if (topic === 'omegooo/lobby/v2') {
-          try {
-            const data = JSON.parse(message.toString());
-            this.handleLobbyAnnounce(data);
-          } catch(e) {}
+      console.log(`[MQTT] Connecting to broker (${idx + 1}/${brokerUrls.length}):`, brokerUrls[idx]);
+
+      try {
+        if (this.mqttClient) {
+          try { this.mqttClient.end(true); } catch(e){}
         }
-      });
 
-      this.mqttClient.on('error', (err) => {
-        console.warn('[MQTT] Signaling broker error, trying fallback...', err);
-        try {
-          this.mqttClient.end();
-          this.mqttClient = window.mqtt.connect(brokerUrls[1], {
-            clientId: 'cli_fb_' + this.myPeerId,
-            keepalive: 10,
-            clean: true,
-            reconnectPeriod: 2000
-          });
+        this.mqttClient = window.mqtt.connect(brokerUrls[idx], {
+          clientId: 'cli_' + Math.random().toString(36).slice(2, 8) + '_' + this.myPeerId.slice(-8),
+          keepalive: 15,
+          clean: true,
+          reconnectPeriod: 3000,
+          connectTimeout: 5000
+        });
+
+        this.mqttClient.on('connect', () => {
+          console.log('[MQTT] Connected successfully to broker:', brokerUrls[idx]);
           this.mqttClient.subscribe('omegooo/lobby/v2');
-        } catch(e) {}
-      });
-    } catch (e) {
-      console.error('[MQTT] Connection failed:', e);
-    }
+        });
+
+        this.mqttClient.on('message', (topic, message) => {
+          if (topic === 'omegooo/lobby/v2') {
+            try {
+              const data = JSON.parse(message.toString());
+              this.handleLobbyAnnounce(data);
+            } catch(e) {}
+          }
+        });
+
+        this.mqttClient.on('error', (err) => {
+          console.warn('[MQTT] Broker error on:', brokerUrls[idx], err);
+          setTimeout(() => connectToBroker((currentBrokerIdx + 1) % brokerUrls.length), 2000);
+        });
+      } catch (e) {
+        console.error('[MQTT] Connection exception:', e);
+        setTimeout(() => connectToBroker((currentBrokerIdx + 1) % brokerUrls.length), 2000);
+      }
+    };
+
+    connectToBroker(0);
   }
 
   setupDataConnection(conn) {
