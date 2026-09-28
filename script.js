@@ -41,7 +41,9 @@ class ChatApp {
       localVideoReadySent: false,
       isOfferOpen: false,
       partnerAvatar: 'https://ui-avatars.com/api/?name=Stranger&background=ff6600&color=fff',
-      partnerName: 'Stranger'
+      partnerName: 'Stranger',
+      lastSkippedPeerId: null,
+      skipTimestamp: 0
     };
 
     this.sessionToken = 0;
@@ -49,6 +51,7 @@ class ChatApp {
     this.searchTimer = null;
     this.pauseTimer = null;
     this.typingTimer = null;
+    this.skippedPeerFallbackTimer = null;
 
     this.reportedIds = new Set();
     this.reportCounts = new Map();
@@ -451,7 +454,7 @@ class ChatApp {
     this.searchTimer = this.setSafeTimer(() => {
       if (!this.state.partnerId && !this.state.isBanned) {
         this.showRemoteSpinnerOnly(false);
-        this.updateStatusMessage('Pausing...');
+        this.updateStatusMessage('Searching for a stranger...');
         this.pauseTimer = this.setSafeTimer(() => {
           if (!this.state.partnerId && !this.state.isBanned) {
             this.startSearchLoop();
@@ -472,25 +475,43 @@ class ChatApp {
     if (myFilterGender !== 'all' && data.gender !== myFilterGender) return;
     if (data.filterGender && data.filterGender !== 'all' && myGender !== data.filterGender) return;
 
-    // Tie breaker: lexicographically smaller peerId acts as initiator
-    if (this.myPeerId < data.peerId) {
-      const user = (typeof window.getGoogleUser === 'function') ? window.getGoogleUser() : null;
-      const myAvatar = user?.picture || localStorage.getItem('user_avatar') || 'https://ui-avatars.com/api/?name=User&background=ff6600&color=fff';
-      const myName = user?.name || 'User';
+    const isRecentlySkipped = (data.peerId === this.state.lastSkippedPeerId) && (Date.now() - (this.state.skipTimestamp || 0) < 10000);
 
-      const roomName = `omegooo_room_${this.myPeerId.slice(0, 8)}_${data.peerId.slice(0, 8)}_${Date.now()}`;
+    const performConnect = () => {
+      if (this.state.partnerId || this.state.isBanned || this.state.isOfferOpen) return;
 
-      if (this.lobbyActions.sendInvite) {
-        this.lobbyActions.sendInvite({
-          targetPeerId: data.peerId,
-          roomName,
-          initiatorPeerId: this.myPeerId,
-          partnerAvatar: myAvatar,
-          partnerName: myName
-        });
+      if (this.myPeerId < data.peerId) {
+        const user = (typeof window.getGoogleUser === 'function') ? window.getGoogleUser() : null;
+        const myAvatar = user?.picture || localStorage.getItem('user_avatar') || 'https://ui-avatars.com/api/?name=User&background=ff6600&color=fff';
+        const myName = user?.name || 'User';
+
+        const roomName = `omegooo_room_${this.myPeerId.slice(0, 8)}_${data.peerId.slice(0, 8)}_${Date.now()}`;
+
+        if (this.lobbyActions.sendInvite) {
+          this.lobbyActions.sendInvite({
+            targetPeerId: data.peerId,
+            roomName,
+            initiatorPeerId: this.myPeerId,
+            partnerAvatar: myAvatar,
+            partnerName: myName
+          });
+        }
+
+        this.connectToPeerRoom(roomName, data.peerId, true, data.avatar, data.name);
       }
+    };
 
-      this.connectToPeerRoom(roomName, data.peerId, true, data.avatar, data.name);
+    if (isRecentlySkipped) {
+      // Prioritize searching for new strangers first.
+      // If no new stranger is available after 1000ms, connect back to skipped peer as fallback!
+      this.clearSafeTimer(this.skippedPeerFallbackTimer);
+      this.skippedPeerFallbackTimer = this.setSafeTimer(() => {
+        performConnect();
+      }, 1000);
+    } else {
+      // New stranger available! Clear any fallback timers and connect immediately
+      this.clearSafeTimer(this.skippedPeerFallbackTimer);
+      performConnect();
     }
   }
 
@@ -499,6 +520,7 @@ class ChatApp {
     if (this.state.partnerId || this.state.isBanned || this.state.isOfferOpen) return;
     if (this.reportedIds.has(senderPeerId)) return;
 
+    this.clearSafeTimer(this.skippedPeerFallbackTimer);
     this.connectToPeerRoom(data.roomName, senderPeerId, false, data.partnerAvatar, data.partnerName);
   }
 
@@ -587,8 +609,12 @@ class ChatApp {
 
   handlePartnerDisconnected() {
     if (this.state.isBanned) return;
+    if (this.state.partnerId) {
+      this.state.lastSkippedPeerId = this.state.partnerId;
+      this.state.skipTimestamp = Date.now();
+    }
     this.setSingleSystemMessage('Stranger has disconnected.', 'stranger-disconnected-msg');
-    this.updateStatusMessage('Stranger disconnected. Pausing...');
+    this.updateStatusMessage('Stranger disconnected. Searching for a new partner...');
     this.disableChat();
     this.cleanupConnection();
     this.showRemoteSpinnerOnly(false);
@@ -784,6 +810,11 @@ class ChatApp {
     const handleSkip = () => {
       if (this.state.isBanned) return;
 
+      if (this.state.partnerId) {
+        this.state.lastSkippedPeerId = this.state.partnerId;
+        this.state.skipTimestamp = Date.now();
+      }
+
       if (this.roomActions.sendSkip) {
         try { this.roomActions.sendSkip({ reason: 'skip' }); } catch (e) {}
       }
@@ -791,7 +822,7 @@ class ChatApp {
       this.disableChat();
       this.cleanupConnection();
       this.showRemoteSpinnerOnly(false);
-      this.updateStatusMessage('Pausing...');
+      this.updateStatusMessage('Searching for a stranger...');
       this.clearSafeTimer(this.searchTimer);
       this.clearSafeTimer(this.pauseTimer);
 
