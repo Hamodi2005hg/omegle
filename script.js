@@ -801,37 +801,31 @@ class ChatApp {
     const adContainer = document.createElement('div');
     adContainer.className = 'chat-ad-banner-card';
     adContainer.style.cssText = `
-      margin: 12px auto;
-      padding: 12px;
-      width: 92%;
+      margin: 10px auto;
+      padding: 6px;
+      width: 95%;
       max-width: 480px;
-      background: rgba(255, 102, 0, 0.08);
-      border: 1px dashed rgba(255, 102, 0, 0.5);
-      border-radius: 14px;
       text-align: center;
       position: relative;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
       z-index: 5;
+      min-height: 50px;
+      overflow: hidden;
     `;
 
-    const label = document.createElement('div');
-    label.style.cssText = 'font-size: 11px; font-weight: 800; color: #ff6600; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px;';
-    label.textContent = '📢 Sponsored Advertisement';
-    adContainer.appendChild(label);
-
     const slot = document.createElement('div');
-    slot.id = 'ad-slot-' + Math.random().toString(36).substring(2, 9);
+    slot.id = 'container-35875a4319c1e9eed9fe938d48d61629';
     adContainer.appendChild(slot);
 
     this.elements.chatMessages.appendChild(adContainer);
     this.elements.chatMessages.scrollTop = this.elements.chatMessages.scrollHeight;
 
-    // Load ad script
+    // Load new ad invoke script
     try {
       const script = document.createElement('script');
-      script.src = 'https://pl31553496.profitableratecpmnetwork.com/64/da/de/64dadef7a23dce381a832951f9c5d2be.js';
+      script.src = 'https://pl31405981.profitableratecpmnetwork.com/35875a4319c1e9eed9fe938d48d61629/invoke.js';
       script.async = true;
-      document.body.appendChild(script);
+      script.setAttribute('data-cfasync', 'false');
+      document.head.appendChild(script);
     } catch (e) {
       console.warn("Ad script insertion warning:", e);
     }
