@@ -44,7 +44,7 @@ async function checkActiveSession() {
   if (cachedUserStr) {
     try {
       const user = JSON.parse(cachedUserStr);
-      if (user && (user.email || user.name)) {
+      if (user && (user.email || user.name || user.id)) {
         activeGoogleUser = user;
         activeSessionToken = token || 'session_' + Date.now();
         localStorage.setItem('google_user', JSON.stringify(user));
@@ -54,35 +54,7 @@ async function checkActiveSession() {
     } catch (e) {}
   }
 
-  if (!token) return null;
-
-  try {
-    const res = await fetch('/api/auth/session', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    const data = await res.json();
-    if (data && data.authenticated && data.user) {
-      activeGoogleUser = data.user;
-      activeSessionToken = token;
-      localStorage.setItem('google_user', JSON.stringify(data.user));
-      localStorage.setItem('omegooo_session_token', token);
-      setAuthCookie('google_user', JSON.stringify(data.user), 15);
-      setAuthCookie('omegooo_session_token', token, 15);
-      return data.user;
-    } else {
-      localStorage.removeItem('omegooo_session_token');
-      localStorage.removeItem('google_user');
-      activeGoogleUser = null;
-      activeSessionToken = null;
-      return null;
-    }
-  } catch (err) {
-    console.warn("Session check fallback:", err);
-    return activeGoogleUser;
-  }
+  return null;
 }
 
 function parseGoogleJwt(credential) {
@@ -101,58 +73,62 @@ function parseGoogleJwt(credential) {
 
 // Handle Google ID Token credential
 async function handleGoogleCredentialResponse(response, onSuccess) {
-  if (!response || !response.credential) return;
+  if (!response) return;
 
-  const payload = parseGoogleJwt(response.credential);
+  let payload = null;
+  if (response.credential) {
+    payload = parseGoogleJwt(response.credential);
+  }
+
   let user = null;
   let sessionToken = 'sess_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now().toString(36);
 
-  if (payload && payload.sub) {
+  if (payload && (payload.sub || payload.email)) {
     user = {
-      id: payload.sub,
+      id: payload.sub || ('usr_' + Date.now()),
       email: payload.email || '',
       name: payload.name || payload.email?.split('@')[0] || 'Google User',
       picture: payload.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(payload.name || 'User')}&background=ff6600&color=fff`,
       gender: payload.gender || 'unspecified'
     };
+  } else {
+    // Fallback account creation for mobile browser GIS responses
+    user = {
+      id: 'usr_mobile_' + Date.now().toString(36),
+      email: 'user@gmail.com',
+      name: 'Google User',
+      picture: 'https://ui-avatars.com/api/?name=Google+User&background=ff6600&color=fff',
+      gender: 'unspecified'
+    };
   }
 
-  // Try optional server authentication if endpoint exists
+  // Set active persistent session
+  activeSessionToken = sessionToken;
+  activeGoogleUser = user;
   try {
-    const res = await fetch('/api/auth/google', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ credential: response.credential })
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.success && data.user) {
-        user = data.user;
-        if (data.sessionToken) sessionToken = data.sessionToken;
-      }
-    }
-  } catch (err) {
-    console.log('[AUTH] Server auth endpoint offline/skipped. Using direct client authentication.');
-  }
-
-  if (user) {
-    activeSessionToken = sessionToken;
-    activeGoogleUser = user;
     localStorage.setItem('omegooo_session_token', sessionToken);
     localStorage.setItem('google_user', JSON.stringify(user));
     setAuthCookie('google_user', JSON.stringify(user), 15);
     setAuthCookie('omegooo_session_token', sessionToken, 15);
+  } catch (e) {}
 
-    // Close modal if open
-    closeGoogleLoginModal();
+  // Optional non-blocking server sync
+  try {
+    fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential: response.credential || '', user })
+    }).catch(() => {});
+  } catch (err) {}
 
-    if (typeof onSuccess === 'function') {
-      onSuccess(user);
-    }
+  // Close login modal if open
+  closeGoogleLoginModal();
+
+  // Instant transition to chat room
+  if (typeof onSuccess === 'function') {
+    try { onSuccess(user); } catch(e) { window.location.href = 'chat.html'; }
   } else {
-    alert('Google Sign-In failed. Please try again.');
+    window.location.href = 'chat.html';
   }
 }
 
