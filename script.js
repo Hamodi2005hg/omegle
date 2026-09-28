@@ -5,38 +5,51 @@
 
 const LINK_REGEX = /(?:https?:\/\/|ftp:\/\/|www\.)[^\s]+|(?:\b[a-zA-Z0-9-]+\.)+(?:com|net|org|edu|gov|io|ai|co|xyz|me|info|biz|ru|cn|uk|de|online|site|app|top|club|vip|live|tv|cc|ly|gg|link|click|space|shop|store|dev|pro|icu|buzz)\b(?:\/[^\s]*)?|(?:t\.me|wa\.me|discord\.gg|telegram\.me|bit\.ly|tinyurl\.com)\/[^\s]+/i;
 
-const ICE_SERVERS = [
-  // STUN Servers (For direct P2P when NAT allows)
-  { urls: 'stun:stun.cloudflare.com:3478' },
-  { urls: 'stun:stun.l.google.com:19302' },
-  { urls: 'stun:stun1.l.google.com:19302' },
-  { urls: 'stun:stun2.l.google.com:19302' },
-  { urls: 'stun:stun3.l.google.com:19302' },
-  { urls: 'stun:stun4.l.google.com:19302' },
-  { urls: 'stun:global.stun.twilio.com:3478' },
+function getIceServers() {
+  const customTurn = window.OMEGOOO_TURN_CONFIG || (function() {
+    try {
+      return JSON.parse(localStorage.getItem('custom_turn_config'));
+    } catch(e) { return null; }
+  })();
 
-  // Global High-Availability TURN Relay Servers (Fixes 4G/5G Mobile CGNAT & Strict Firewalls)
-  {
-    urls: 'turn:openrelay.metered.ca:80',
-    username: 'openrelayproject',
-    credential: 'openrelayproject'
-  },
-  {
-    urls: 'turn:openrelay.metered.ca:443',
-    username: 'openrelayproject',
-    credential: 'openrelayproject'
-  },
-  {
-    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-    username: 'openrelayproject',
-    credential: 'openrelayproject'
-  },
-  {
-    urls: 'turns:openrelay.metered.ca:443?transport=tcp',
-    username: 'openrelayproject',
-    credential: 'openrelayproject'
+  const defaultServers = [
+    // STUN Servers (For direct P2P when NAT allows)
+    { urls: 'stun:stun.cloudflare.com:3478' },
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' },
+    { urls: 'stun:global.stun.twilio.com:3478' },
+
+    // Global High-Availability TURN Relay Servers (Fixes 4G/5G Mobile CGNAT & Strict Firewalls)
+    {
+      urls: 'turn:openrelay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    },
+    {
+      urls: 'turns:openrelay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    }
+  ];
+
+  if (Array.isArray(customTurn) && customTurn.length > 0) {
+    return [...customTurn, ...defaultServers];
   }
-];
+  return defaultServers;
+}
 
 class ChatApp {
   constructor() {
@@ -126,7 +139,7 @@ class ChatApp {
     try {
       this.peer = new window.Peer(this.myPeerId, {
         config: {
-          iceServers: ICE_SERVERS,
+          iceServers: getIceServers(),
           iceCandidatePoolSize: 10
         },
         debug: 1
