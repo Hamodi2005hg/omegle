@@ -109,6 +109,22 @@ class ChatApp {
     return null;
   }
 
+  getRoomConfig() {
+    return {
+      appId: this.appId,
+      rtcConfig: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' },
+          { urls: 'stun:stun3.l.google.com:19302' },
+          { urls: 'stun:stun4.l.google.com:19302' },
+          { urls: 'stun:global.stun.twilio.com:3478' }
+        ]
+      }
+    };
+  }
+
   initLobby() {
     const joinRoomFn = this.getJoinRoomFn();
     if (!joinRoomFn) {
@@ -118,7 +134,7 @@ class ChatApp {
     }
 
     try {
-      this.lobby = joinRoomFn({ appId: this.appId }, this.lobbyRoomName);
+      this.lobby = joinRoomFn(this.getRoomConfig(), this.lobbyRoomName);
       
       const [sendAnnounce, getAnnounce] = this.lobby.makeAction('announce');
       const [sendInvite, getInvite] = this.lobby.makeAction('invite');
@@ -387,6 +403,11 @@ class ChatApp {
     this.sessionToken++;
     this.clearAllTimers();
 
+    if (this.announceIntervalTimer) {
+      clearInterval(this.announceIntervalTimer);
+      this.announceIntervalTimer = null;
+    }
+
     if (this.currentRoom) {
       try {
         if (this.roomActions.sendSkip) {
@@ -431,22 +452,39 @@ class ChatApp {
     this.showRemoteSpinnerOnly(true);
     this.updateStatusMessage('Searching for a stranger...');
 
-    const filterGender = (typeof window.getActiveGenderFilter === 'function') ? window.getActiveGenderFilter() : 'all';
-    const user = (typeof window.getGoogleUser === 'function') ? window.getGoogleUser() : (JSON.parse(localStorage.getItem('google_user') || 'null'));
-    const avatar = user?.picture || 'https://ui-avatars.com/api/?name=User&background=ff6600&color=fff';
-    const name = user?.name || 'User';
-    const gender = localStorage.getItem('user_gender') || 'male';
+    const sendMyAnnounce = () => {
+      if (this.state.partnerId || this.state.isBanned) return;
+      const filterGender = (typeof window.getActiveGenderFilter === 'function') ? window.getActiveGenderFilter() : 'all';
+      const user = (typeof window.getGoogleUser === 'function') ? window.getGoogleUser() : (JSON.parse(localStorage.getItem('google_user') || 'null'));
+      const avatar = user?.picture || 'https://ui-avatars.com/api/?name=User&background=ff6600&color=fff';
+      const name = user?.name || 'User';
+      const gender = localStorage.getItem('user_gender') || 'male';
 
-    if (this.lobbyActions.sendAnnounce) {
-      this.lobbyActions.sendAnnounce({
-        peerId: this.myPeerId,
-        gender,
-        filterGender,
-        avatar,
-        name,
-        ts: Date.now()
-      });
-    }
+      if (this.lobbyActions.sendAnnounce) {
+        try {
+          this.lobbyActions.sendAnnounce({
+            peerId: this.myPeerId,
+            gender,
+            filterGender,
+            avatar,
+            name,
+            ts: Date.now()
+          });
+        } catch (e) {}
+      }
+    };
+
+    sendMyAnnounce();
+
+    if (this.announceIntervalTimer) clearInterval(this.announceIntervalTimer);
+    this.announceIntervalTimer = setInterval(() => {
+      if (!this.state.partnerId && !this.state.isBanned) {
+        sendMyAnnounce();
+      } else {
+        clearInterval(this.announceIntervalTimer);
+        this.announceIntervalTimer = null;
+      }
+    }, 1200);
 
     this.clearSafeTimer(this.searchTimer);
     this.clearSafeTimer(this.pauseTimer);
@@ -480,14 +518,15 @@ class ChatApp {
     const performConnect = () => {
       if (this.state.partnerId || this.state.isBanned || this.state.isOfferOpen) return;
 
-      if (this.myPeerId < data.peerId) {
-        const user = (typeof window.getGoogleUser === 'function') ? window.getGoogleUser() : null;
-        const myAvatar = user?.picture || localStorage.getItem('user_avatar') || 'https://ui-avatars.com/api/?name=User&background=ff6600&color=fff';
-        const myName = user?.name || 'User';
+      const user = (typeof window.getGoogleUser === 'function') ? window.getGoogleUser() : null;
+      const myAvatar = user?.picture || localStorage.getItem('user_avatar') || 'https://ui-avatars.com/api/?name=User&background=ff6600&color=fff';
+      const myName = user?.name || 'User';
 
-        const roomName = `omegooo_room_${this.myPeerId.slice(0, 8)}_${data.peerId.slice(0, 8)}_${Date.now()}`;
+      const sortedPeers = [this.myPeerId, data.peerId].sort();
+      const roomName = `omegooo_room_${sortedPeers[0].slice(0, 8)}_${sortedPeers[1].slice(0, 8)}`;
 
-        if (this.lobbyActions.sendInvite) {
+      if (this.myPeerId === sortedPeers[0] && this.lobbyActions.sendInvite) {
+        try {
           this.lobbyActions.sendInvite({
             targetPeerId: data.peerId,
             roomName,
@@ -495,21 +534,18 @@ class ChatApp {
             partnerAvatar: myAvatar,
             partnerName: myName
           });
-        }
-
-        this.connectToPeerRoom(roomName, data.peerId, true, data.avatar, data.name);
+        } catch (e) {}
       }
+
+      this.connectToPeerRoom(roomName, data.peerId, (this.myPeerId === sortedPeers[0]), data.avatar, data.name);
     };
 
     if (isRecentlySkipped) {
-      // Prioritize searching for new strangers first.
-      // If no new stranger is available after 1000ms, connect back to skipped peer as fallback!
       this.clearSafeTimer(this.skippedPeerFallbackTimer);
       this.skippedPeerFallbackTimer = this.setSafeTimer(() => {
         performConnect();
       }, 1000);
     } else {
-      // New stranger available! Clear any fallback timers and connect immediately
       this.clearSafeTimer(this.skippedPeerFallbackTimer);
       performConnect();
     }
@@ -525,10 +561,15 @@ class ChatApp {
   }
 
   connectToPeerRoom(roomName, partnerPeerId, isInitiator, partnerAvatar, partnerName) {
-    if (this.state.partnerId) return;
+    if (this.state.partnerId === partnerPeerId && this.currentRoom) return;
 
     const joinRoomFn = this.getJoinRoomFn();
     if (!joinRoomFn) return;
+
+    if (this.announceIntervalTimer) {
+      clearInterval(this.announceIntervalTimer);
+      this.announceIntervalTimer = null;
+    }
 
     this.cleanupConnection();
     const currentSession = ++this.sessionToken;
@@ -544,11 +585,22 @@ class ChatApp {
     this.enableChat();
 
     try {
-      this.currentRoom = joinRoomFn({ appId: this.appId }, roomName);
+      this.currentRoom = joinRoomFn(this.getRoomConfig(), roomName);
 
       if (this.state.localStream) {
-        this.currentRoom.addStream(this.state.localStream);
+        try {
+          this.currentRoom.addStream(this.state.localStream);
+        } catch (e) {}
       }
+
+      this.currentRoom.onPeerJoin((peerId) => {
+        if (this.sessionToken !== currentSession) return;
+        if (this.state.localStream) {
+          try {
+            this.currentRoom.addStream(this.state.localStream);
+          } catch (e) {}
+        }
+      });
 
       this.currentRoom.onStream((stream, peerId) => {
         if (this.sessionToken !== currentSession) return;
