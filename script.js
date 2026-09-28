@@ -5,14 +5,37 @@
 
 const LINK_REGEX = /(?:https?:\/\/|ftp:\/\/|www\.)[^\s]+|(?:\b[a-zA-Z0-9-]+\.)+(?:com|net|org|edu|gov|io|ai|co|xyz|me|info|biz|ru|cn|uk|de|online|site|app|top|club|vip|live|tv|cc|ly|gg|link|click|space|shop|store|dev|pro|icu|buzz)\b(?:\/[^\s]*)?|(?:t\.me|wa\.me|discord\.gg|telegram\.me|bit\.ly|tinyurl\.com)\/[^\s]+/i;
 
-const STUN_SERVERS = [
+const ICE_SERVERS = [
+  // STUN Servers (For direct P2P when NAT allows)
   { urls: 'stun:stun.cloudflare.com:3478' },
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
   { urls: 'stun:stun2.l.google.com:19302' },
   { urls: 'stun:stun3.l.google.com:19302' },
   { urls: 'stun:stun4.l.google.com:19302' },
-  { urls: 'stun:global.stun.twilio.com:3478' }
+  { urls: 'stun:global.stun.twilio.com:3478' },
+
+  // Global High-Availability TURN Relay Servers (Fixes 4G/5G Mobile CGNAT & Strict Firewalls)
+  {
+    urls: 'turn:openrelay.metered.ca:80',
+    username: 'openrelayproject',
+    credential: 'openrelayproject'
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443',
+    username: 'openrelayproject',
+    credential: 'openrelayproject'
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+    username: 'openrelayproject',
+    credential: 'openrelayproject'
+  },
+  {
+    urls: 'turns:openrelay.metered.ca:443?transport=tcp',
+    username: 'openrelayproject',
+    credential: 'openrelayproject'
+  }
 ];
 
 class ChatApp {
@@ -102,7 +125,10 @@ class ChatApp {
 
     try {
       this.peer = new window.Peer(this.myPeerId, {
-        config: { iceServers: STUN_SERVERS },
+        config: {
+          iceServers: ICE_SERVERS,
+          iceCandidatePoolSize: 10
+        },
         debug: 1
       });
 
@@ -204,14 +230,14 @@ class ChatApp {
 
         this.mqttClient.on('connect', () => {
           console.log('[MQTT] Connected successfully to broker:', brokerUrls[idx]);
-          this.mqttClient.subscribe('omegooo/lobby/v2');
+          this.mqttClient.subscribe(['omegooo/lobby/v2', 'omegooo/lobby/v2/#']);
           if (!this.state.partnerId && !this.state.isBanned && this.state.localStream && this.state.localStream.active) {
             this.startSearchLoop();
           }
         });
 
         this.mqttClient.on('message', (topic, message) => {
-          if (topic === 'omegooo/lobby/v2') {
+          if (topic.startsWith('omegooo/lobby/v2')) {
             try {
               const data = JSON.parse(message.toString());
               this.handleLobbyAnnounce(data);
@@ -659,8 +685,11 @@ class ChatApp {
         ts: Date.now()
       };
 
+      const shardId = Math.floor(Math.random() * 8);
+      const topic = `omegooo/lobby/v2/shard_${shardId}`;
+
       try {
-        this.mqttClient.publish('omegooo/lobby/v2', JSON.stringify(payload));
+        this.mqttClient.publish(topic, JSON.stringify(payload));
       } catch(e) {}
     };
 
