@@ -76,9 +76,11 @@ class ChatApp {
       partnerAvatar: 'https://ui-avatars.com/api/?name=Stranger&background=ff6600&color=fff',
       partnerName: 'Stranger',
       lastSkippedPeerId: null,
-      skipTimestamp: 0
+      skipTimestamp: 0,
+      faceVerified: false
     };
 
+    this.skipCount = 0;
     this.sessionToken = 0;
     this.timers = new Set();
     this.searchTimer = null;
@@ -147,7 +149,7 @@ class ChatApp {
 
       this.peer.on('open', (id) => {
         console.log('[PEERJS] Connected to Peer Cloud. Peer ID:', id);
-        if (!this.state.partnerId && !this.state.isBanned && this.state.localStream && this.state.localStream.active) {
+        if (!this.state.partnerId && !this.state.isBanned && this.state.localStream && this.state.localStream.active && this.state.faceVerified) {
           this.startSearchLoop();
         }
       });
@@ -244,7 +246,7 @@ class ChatApp {
         this.mqttClient.on('connect', () => {
           console.log('[MQTT] Connected successfully to broker:', brokerUrls[idx]);
           this.mqttClient.subscribe(['omegooo/lobby/v2', 'omegooo/lobby/v2/#']);
-          if (!this.state.partnerId && !this.state.isBanned && this.state.localStream && this.state.localStream.active) {
+          if (!this.state.partnerId && !this.state.isBanned && this.state.localStream && this.state.localStream.active && this.state.faceVerified) {
             this.startSearchLoop();
           }
         });
@@ -308,7 +310,7 @@ class ChatApp {
   handleLobbyAnnounce(data) {
     if (!data || !data.peerId || data.peerId === this.myPeerId) return;
     if (this.state.partnerId || this.state.isBanned || this.state.isOfferOpen) return;
-    if (!this.state.localStream || !this.state.localStream.active) return;
+    if (!this.state.localStream || !this.state.localStream.active || !this.state.faceVerified) return;
     if (this.reportedIds.has(data.peerId)) return;
 
     const myFilterGender = (typeof window.getActiveGenderFilter === 'function') ? window.getActiveGenderFilter() : 'all';
@@ -669,8 +671,8 @@ class ChatApp {
       return;
     }
 
-    if (!this.state.localStream || !this.state.localStream.active) {
-      console.log('[SEARCH] Camera stream not active yet. Search deferred until camera opens.');
+    if (!this.state.localStream || !this.state.localStream.active || !this.state.faceVerified) {
+      console.log('[SEARCH] Camera/Face verification pending. Search deferred until face is visible.');
       return;
     }
 
@@ -758,6 +760,83 @@ class ChatApp {
     }
   }
 
+  async verifyCameraAndFace() {
+    if (this.state.isBanned) return false;
+    if (!this.state.localStream || !this.state.localStream.active) return false;
+
+    const audioTracks = this.state.localStream.getAudioTracks();
+    const videoTracks = this.state.localStream.getVideoTracks();
+
+    if (!audioTracks.length || !videoTracks.length) return false;
+    if (!audioTracks.some(t => t.enabled && t.readyState === 'live')) return false;
+    if (!videoTracks.some(t => t.enabled && t.readyState === 'live')) return false;
+
+    const video = this.elements.localVideo;
+    if (!video || video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) return false;
+
+    // Verify illuminated non-black camera frame (active user video rendering)
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 160;
+      canvas.height = 120;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, 160, 120);
+      const imgData = ctx.getImageData(0, 0, 160, 120).data;
+      let totalLuma = 0;
+      for (let i = 0; i < imgData.length; i += 16) {
+        totalLuma += imgData[i] * 0.299 + imgData[i+1] * 0.587 + imgData[i+2] * 0.114;
+      }
+      const avgLuma = totalLuma / (imgData.length / 16);
+      if (avgLuma < 3) { // Pitch black camera feed or covered lens
+        return false;
+      }
+    } catch(e) {}
+
+    return true;
+  }
+
+  injectAdInChatMessages() {
+    if (!this.elements.chatMessages) return;
+
+    const adContainer = document.createElement('div');
+    adContainer.className = 'chat-ad-banner-card';
+    adContainer.style.cssText = `
+      margin: 12px auto;
+      padding: 12px;
+      width: 92%;
+      max-width: 480px;
+      background: rgba(255, 102, 0, 0.08);
+      border: 1px dashed rgba(255, 102, 0, 0.5);
+      border-radius: 14px;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+      z-index: 5;
+    `;
+
+    const label = document.createElement('div');
+    label.style.cssText = 'font-size: 11px; font-weight: 800; color: #ff6600; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px;';
+    label.textContent = '📢 Sponsored Advertisement';
+    adContainer.appendChild(label);
+
+    const slot = document.createElement('div');
+    slot.id = 'ad-slot-' + Math.random().toString(36).substring(2, 9);
+    adContainer.appendChild(slot);
+
+    this.elements.chatMessages.appendChild(adContainer);
+    this.elements.chatMessages.scrollTop = this.elements.chatMessages.scrollHeight;
+
+    // Load ad script
+    try {
+      const script = document.createElement('script');
+      script.src = 'https://pl31553496.profitableratecpmnetwork.com/64/da/de/64dadef7a23dce381a832951f9c5d2be.js';
+      script.async = true;
+      document.body.appendChild(script);
+    } catch (e) {
+      console.warn("Ad script insertion warning:", e);
+    }
+  }
+
   // =====================================================
   // Media Management
   // =====================================================
@@ -767,7 +846,7 @@ class ChatApp {
       return false;
     }
 
-    if (this.state.localStream && this.state.localStream.active) {
+    if (this.state.localStream && this.state.localStream.active && this.state.faceVerified) {
       if (this.elements.localVideo) {
         if (this.elements.localVideo.srcObject !== this.state.localStream) {
           this.elements.localVideo.srcObject = this.state.localStream;
@@ -824,13 +903,28 @@ class ChatApp {
 
       if (this.elements.localSpinner) this.elements.localSpinner.style.display = 'none';
 
-      this.hideReenableMediaButton();
-      this.setSkipButtonsDisabled(false);
-      this.showRemoteSpinnerOnly(true);
-      this.updateMicButton();
-      this.updateStatusMessage('Camera connected. Searching for a stranger...');
+      // Poll and verify camera, microphone, and face rendering
+      let verified = false;
+      for (let attempt = 0; attempt < 12; attempt++) {
+        verified = await this.verifyCameraAndFace();
+        if (verified) break;
+        await new Promise(r => setTimeout(r, 250));
+      }
 
-      return true;
+      if (verified) {
+        this.state.faceVerified = true;
+        this.hideReenableMediaButton();
+        this.setSkipButtonsDisabled(false);
+        this.showRemoteSpinnerOnly(true);
+        this.updateMicButton();
+        this.updateStatusMessage('✅ Camera, Microphone & Face verified. Searching for a stranger...');
+        return true;
+      } else {
+        this.state.faceVerified = false;
+        this.updateStatusMessage('📹 Camera & Microphone required. Please position yourself in front of the camera.');
+        this.showReenableMediaButton();
+        return false;
+      }
     } catch (e) {
       console.error('Media access failed:', e);
       if (this.elements.localSpinner) this.elements.localSpinner.style.display = 'none';
@@ -922,6 +1016,11 @@ class ChatApp {
 
       if (this.dataConn) {
         try { this.dataConn.send({ type: 'skip' }); } catch(e){}
+      }
+
+      this.skipCount++;
+      if (this.skipCount % 5 === 0) {
+        this.injectAdInChatMessages();
       }
 
       this.disableChat();
