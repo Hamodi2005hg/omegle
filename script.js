@@ -108,12 +108,15 @@ class ChatApp {
 
       this.peer.on('open', (id) => {
         console.log('[PEERJS] Connected to Peer Cloud. Peer ID:', id);
+        if (!this.state.partnerId && !this.state.isBanned && this.state.localStream) {
+          this.startSearchLoop();
+        }
       });
 
       // Handle Incoming Call (Video Stream)
       this.peer.on('call', (call) => {
         console.log('[PEERJS] Incoming call from:', call.peer);
-        if (this.state.partnerId || this.state.isBanned) {
+        if (this.state.partnerId && this.state.partnerId !== call.peer) {
           call.close();
           return;
         }
@@ -151,7 +154,7 @@ class ChatApp {
       // Handle Incoming Data Connection (Chat / Typing / Skip signals)
       this.peer.on('connection', (conn) => {
         console.log('[PEERJS] Incoming data connection from:', conn.peer);
-        if (this.dataConn) {
+        if (this.dataConn && this.dataConn.peer !== conn.peer) {
           try { conn.close(); } catch(e){}
         }
         this.dataConn = conn;
@@ -202,6 +205,9 @@ class ChatApp {
         this.mqttClient.on('connect', () => {
           console.log('[MQTT] Connected successfully to broker:', brokerUrls[idx]);
           this.mqttClient.subscribe('omegooo/lobby/v2');
+          if (!this.state.partnerId && !this.state.isBanned && this.state.localStream) {
+            this.startSearchLoop();
+          }
         });
 
         this.mqttClient.on('message', (topic, message) => {
@@ -275,47 +281,47 @@ class ChatApp {
 
     const performConnect = () => {
       if (this.state.partnerId || this.state.isBanned || this.state.isOfferOpen) return;
-      if (!this.peer) return;
+      if (!this.peer || !this.peer.open) {
+        setTimeout(() => performConnect(), 300);
+        return;
+      }
 
-      // Deterministic caller selection: smaller peer ID initiates the call
-      if (this.myPeerId < data.peerId) {
-        console.log('[MATCHMAKING] Calling peer:', data.peerId);
-        this.state.partnerId = data.peerId;
-        this.state.isInitiator = true;
-        this.state.partnerAvatar = data.avatar || 'https://ui-avatars.com/api/?name=Stranger&background=ff6600&color=fff';
-        this.state.partnerName = data.name || 'Stranger';
+      console.log('[MATCHMAKING] Auto-connecting with announced peer:', data.peerId);
+      this.state.partnerId = data.peerId;
+      this.state.isInitiator = true;
+      this.state.partnerAvatar = data.avatar || 'https://ui-avatars.com/api/?name=Stranger&background=ff6600&color=fff';
+      this.state.partnerName = data.name || 'Stranger';
 
-        this.setSingleSystemMessage('Connected with a stranger. Say hello! 👋😊', 'stranger-connected-msg');
-        this.updateStatusMessage("Hello 👋 You've been contacted by a stranger Say hello 😊🤝");
+      this.setSingleSystemMessage('Connected with a stranger. Say hello! 👋😊', 'stranger-connected-msg');
+      this.updateStatusMessage("Hello 👋 You've been contacted by a stranger Say hello 😊🤝");
 
-        // Initiate PeerJS Video Call
-        if (this.state.localStream) {
-          this.currentCall = this.peer.call(data.peerId, this.state.localStream);
-        } else {
-          this.currentCall = this.peer.call(data.peerId);
-        }
+      // Initiate PeerJS Video Call
+      if (this.state.localStream) {
+        this.currentCall = this.peer.call(data.peerId, this.state.localStream);
+      } else {
+        this.currentCall = this.peer.call(data.peerId);
+      }
 
-        if (this.currentCall) {
-          this.currentCall.on('stream', (remoteStream) => {
-            if (this.elements.remoteVideo) {
-              this.elements.remoteVideo.srcObject = remoteStream;
-              this.elements.remoteVideo.play().catch(() => {});
-            }
-            this.hideAllSpinners();
-            this.enableChat();
-            this.updateStatusMessage("Hello 👋 You've been contacted by a stranger Say hello 😊🤝");
-          });
+      if (this.currentCall) {
+        this.currentCall.on('stream', (remoteStream) => {
+          if (this.elements.remoteVideo) {
+            this.elements.remoteVideo.srcObject = remoteStream;
+            this.elements.remoteVideo.play().catch(() => {});
+          }
+          this.hideAllSpinners();
+          this.enableChat();
+          this.updateStatusMessage("Hello 👋 You've been contacted by a stranger Say hello 😊🤝");
+        });
 
-          this.currentCall.on('close', () => {
-            this.handlePartnerDisconnected();
-          });
-        }
+        this.currentCall.on('close', () => {
+          this.handlePartnerDisconnected();
+        });
+      }
 
-        // Initiate PeerJS Data Connection for Chat
-        this.dataConn = this.peer.connect(data.peerId);
-        if (this.dataConn) {
-          this.setupDataConnection(this.dataConn);
-        }
+      // Initiate PeerJS Data Connection for Chat
+      this.dataConn = this.peer.connect(data.peerId);
+      if (this.dataConn) {
+        this.setupDataConnection(this.dataConn);
       }
     };
 
@@ -341,7 +347,6 @@ class ChatApp {
       remoteSpinner: document.getElementById('remoteSpinner'),
       reportBtn: document.getElementById('reportBtn'),
       micBtn: document.getElementById('micBtn'),
-      flipLocalVideoBtn: document.getElementById('flipLocalVideoBtn'),
       chatMessages: document.getElementById('chatMessages'),
       chatInput: document.getElementById('chatInput'),
       sendBtn: document.getElementById('sendBtn'),
@@ -663,7 +668,7 @@ class ChatApp {
         clearInterval(this.searchPulseInterval);
         this.searchPulseInterval = null;
       }
-    }, 1200);
+    }, 1000);
 
     this.clearSafeTimer(this.searchTimer);
     this.clearSafeTimer(this.pauseTimer);
@@ -908,17 +913,6 @@ class ChatApp {
         this.state.micEnabled = !this.state.micEnabled;
         this.state.localStream.getAudioTracks().forEach(t => t.enabled = this.state.micEnabled);
         this.updateMicButton();
-      };
-    }
-
-    // Flip camera view button
-    if (this.elements.flipLocalVideoBtn) {
-      this.elements.flipLocalVideoBtn.onclick = () => {
-        if (this.elements.localVideo) {
-          this.elements.localVideo.classList.toggle('mirrored');
-          const isMirrored = this.elements.localVideo.classList.contains('mirrored');
-          this.elements.flipLocalVideoBtn.style.background = isMirrored ? '#ff6600' : 'rgba(0,0,0,0.6)';
-        }
       };
     }
 
