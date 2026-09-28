@@ -158,7 +158,7 @@ class ChatApp {
       this.peer.on('call', (call) => {
         console.log('[PEERJS] Incoming call from:', call.peer);
         if (this.state.partnerId && this.state.partnerId !== call.peer) {
-          call.close();
+          try { call.close(); } catch(e){}
           return;
         }
 
@@ -171,6 +171,8 @@ class ChatApp {
           call.answer();
         }
 
+        this.setupCallErrorHandlers(call);
+
         call.on('stream', (remoteStream) => {
           console.log('[PEERJS] Remote stream received from:', call.peer);
           if (this.elements.remoteVideo) {
@@ -179,6 +181,7 @@ class ChatApp {
           }
           this.hideAllSpinners();
           this.enableChat();
+          this.setSkipButtonsDisabled(false); // Enable Skip ONLY when connected with a stranger
           this.updateStatusMessage("Hello 👋 You've been contacted by a stranger Say hello 😊🤝");
         });
 
@@ -188,7 +191,7 @@ class ChatApp {
 
         call.on('error', (err) => {
           console.warn('[PEERJS] Call error:', err);
-          this.handlePartnerDisconnected();
+          this.handleConnectionError('Connection lost with stranger.');
         });
       });
 
@@ -273,9 +276,61 @@ class ChatApp {
     connectToBroker(0);
   }
 
+  setupCallErrorHandlers(call) {
+    if (!call) return;
+    try {
+      call.on('error', (err) => {
+        console.warn('[PEERJS] Call error event:', err);
+        this.handleConnectionError('Connection issue encountered with stranger.');
+      });
+
+      const pc = call.peerConnection || call._peerConnection;
+      if (pc) {
+        pc.oniceconnectionstatechange = () => {
+          const state = pc.iceConnectionState;
+          console.log('[WEBRTC] ICE Connection State:', state);
+          if (state === 'failed' || state === 'disconnected' || state === 'closed') {
+            this.handleConnectionError('Connection lost. Searching for a new stranger...');
+          }
+        };
+        pc.onconnectionstatechange = () => {
+          const state = pc.connectionState;
+          console.log('[WEBRTC] Connection State:', state);
+          if (state === 'failed' || state === 'disconnected' || state === 'closed') {
+            this.handleConnectionError('Connection lost. Searching for a new stranger...');
+          }
+        };
+      }
+    } catch(e) {}
+  }
+
+  handleConnectionError(msg) {
+    if (this.state.isBanned) return;
+    console.warn('[CONN_ERROR]', msg);
+    this.setSingleSystemMessage(msg || 'Connection lost.', 'stranger-disconnected-msg');
+    this.updateStatusMessage(msg || 'Searching for a stranger...');
+    this.disableChat();
+    this.setSkipButtonsDisabled(true);
+    this.cleanupConnection();
+    this.showRemoteSpinnerOnly(false);
+
+    this.clearSafeTimer(this.searchTimer);
+    this.clearSafeTimer(this.pauseTimer);
+
+    this.pauseTimer = this.setSafeTimer(() => {
+      if (!this.state.partnerId && !this.state.isBanned) {
+        this.startSearchLoop();
+      }
+    }, this.config.NORMAL_PAUSE_DURATION);
+  }
+
   setupDataConnection(conn) {
     conn.on('open', () => {
       console.log('[DATA] Data connection opened with:', conn.peer);
+      if (this.state.partnerId === conn.peer) {
+        this.enableChat();
+        this.setSkipButtonsDisabled(false); // Enable Skip ONLY when connected
+      }
     });
 
     conn.on('data', (data) => {
@@ -345,6 +400,8 @@ class ChatApp {
       }
 
       if (this.currentCall) {
+        this.setupCallErrorHandlers(this.currentCall);
+
         this.currentCall.on('stream', (remoteStream) => {
           if (this.elements.remoteVideo) {
             this.elements.remoteVideo.srcObject = remoteStream;
@@ -352,11 +409,17 @@ class ChatApp {
           }
           this.hideAllSpinners();
           this.enableChat();
+          this.setSkipButtonsDisabled(false); // Enable Skip ONLY when connected
           this.updateStatusMessage("Hello 👋 You've been contacted by a stranger Say hello 😊🤝");
         });
 
         this.currentCall.on('close', () => {
           this.handlePartnerDisconnected();
+        });
+
+        this.currentCall.on('error', (err) => {
+          console.warn('[PEERJS] Call error:', err);
+          this.handleConnectionError('Connection lost with stranger.');
         });
       }
 
@@ -588,7 +651,18 @@ class ChatApp {
   }
 
   setSkipButtonsDisabled(disabled) {
-    if (this.elements.skipBtn) this.elements.skipBtn.disabled = disabled;
+    if (this.elements.skipBtn) {
+      this.elements.skipBtn.disabled = disabled;
+      if (disabled) {
+        this.elements.skipBtn.style.opacity = '0.5';
+        this.elements.skipBtn.style.cursor = 'not-allowed';
+        this.elements.skipBtn.style.pointerEvents = 'none';
+      } else {
+        this.elements.skipBtn.style.opacity = '1';
+        this.elements.skipBtn.style.cursor = 'pointer';
+        this.elements.skipBtn.style.pointerEvents = 'auto';
+      }
+    }
   }
 
   updateMicButton() {
@@ -618,13 +692,32 @@ class ChatApp {
     this.sessionToken++;
     this.clearAllTimers();
 
+    // Thorough Fast WebRTC Track & Connection Reset
     if (this.currentCall) {
-      try { this.currentCall.close(); } catch (e) {}
+      try {
+        const pc = this.currentCall.peerConnection || this.currentCall._peerConnection;
+        if (pc) {
+          pc.oniceconnectionstatechange = null;
+          pc.onconnectionstatechange = null;
+          pc.onicecandidate = null;
+          pc.ontrack = null;
+          try {
+            const senders = pc.getSenders ? pc.getSenders() : [];
+            senders.forEach(s => {
+              try { if (s.track) s.track.stop(); } catch(e){}
+            });
+          } catch(e){}
+        }
+        this.currentCall.close();
+      } catch (e) {}
       this.currentCall = null;
     }
 
     if (this.dataConn) {
-      try { this.dataConn.close(); } catch (e) {}
+      try {
+        this.dataConn.removeAllListeners();
+        this.dataConn.close();
+      } catch (e) {}
       this.dataConn = null;
     }
 
@@ -636,11 +729,18 @@ class ChatApp {
         }
         this.elements.remoteVideo.pause();
         this.elements.remoteVideo.srcObject = null;
+        this.elements.remoteVideo.load();
       } catch (e) {}
     }
 
     this.state.partnerId = null;
     this.state.isInitiator = false;
+    this.state.isOfferOpen = false;
+    this.typing = false;
+    if (this.typingIndicator) this.typingIndicator.style.display = 'none';
+
+    this.disableChat();
+    this.setSkipButtonsDisabled(true); // Disable Skip button immediately during idle/search
   }
 
   handlePartnerDisconnected() {
@@ -678,6 +778,7 @@ class ChatApp {
 
     if (this.state.partnerId || this.state.isOfferOpen) return;
 
+    this.setSkipButtonsDisabled(true);
     this.showRemoteSpinnerOnly(true);
     this.updateStatusMessage('Searching for a stranger...');
 
@@ -1002,6 +1103,9 @@ class ChatApp {
     // Skip button
     const handleSkip = () => {
       if (this.state.isBanned) return;
+
+      // Disable skip button immediately on click to prevent rapid spam clicking
+      this.setSkipButtonsDisabled(true);
 
       if (this.state.partnerId) {
         this.state.lastSkippedPeerId = this.state.partnerId;
