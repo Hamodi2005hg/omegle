@@ -1,6 +1,21 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
+  <script>
+    (function() {
+      const origWarn = console.warn;
+      const origInfo = console.info;
+      const filterRegex = /already registered|Platform browser has already been set|Overwriting the platform|backend was already registered/i;
+      console.warn = function(...args) {
+        if (args[0] && typeof args[0] === 'string' && filterRegex.test(args[0])) return;
+        origWarn.apply(console, args);
+      };
+      console.info = function(...args) {
+        if (args[0] && typeof args[0] === 'string' && filterRegex.test(args[0])) return;
+        origInfo.apply(console, args);
+      };
+    })();
+  </script>
   <script src="/translator.js" defer></script>
   <script src="/google-auth.js"></script>
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9832680951042052" crossorigin="anonymous"></script>

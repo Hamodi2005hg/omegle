@@ -1163,6 +1163,10 @@ class ChatApp {
   // NSFW AI Moderation
   // =====================================================
   async initNSFWJS() {
+    if (window.tf && typeof window.tf.enableProdMode === 'function') {
+      try { window.tf.enableProdMode(); } catch(e){}
+    }
+
     let attempts = 0;
     const modelEndpoints = [
       'https://cdn.jsdelivr.net/gh/infinitered/nsfwjs@2.4.2/example/nsfw_demo/public/quant_nsfw_mobilenet/',
