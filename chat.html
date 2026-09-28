@@ -113,7 +113,11 @@
     .video-frame.top{height:360px;}
     .video-frame.bottom{height:360px;}
     video{width:100%;height:100%;object-fit:cover;position:relative;z-index:1;background:#0f172a;}
-    #localVideo{
+    #localVideo, #remoteVideo{
+      transform: none;
+      -webkit-transform: none;
+    }
+    #localVideo.mirrored, #remoteVideo.mirrored{
       transform: scaleX(-1);
       -webkit-transform: scaleX(-1);
     }
@@ -661,7 +665,8 @@
         <video id="remoteVideo" autoplay playsinline></video>
       </div>
       <div class="video-frame bottom">
-        <button id="micBtn">🎤</button>
+        <button id="micBtn" title="Mute/Unmute Mic">🎤</button>
+        <button id="flipLocalVideoBtn" type="button" title="Flip/Mirror View" style="position:absolute; bottom:10px; right:55px; background:rgba(0,0,0,0.6); color:#fff; padding:7px; font-size:16px; border-radius:50%; cursor:pointer; border:1px solid rgba(255,255,255,0.3); z-index:10; min-width:40px; min-height:40px;">🔄</button>
         <div class="watermark">Omegooo.com</div>
         <div class="video-label">You</div>
         <div id="localSpinner" class="spinner" style="display: none;"></div>

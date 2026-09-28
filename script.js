@@ -341,6 +341,7 @@ class ChatApp {
       remoteSpinner: document.getElementById('remoteSpinner'),
       reportBtn: document.getElementById('reportBtn'),
       micBtn: document.getElementById('micBtn'),
+      flipLocalVideoBtn: document.getElementById('flipLocalVideoBtn'),
       chatMessages: document.getElementById('chatMessages'),
       chatInput: document.getElementById('chatInput'),
       sendBtn: document.getElementById('sendBtn'),
@@ -907,6 +908,17 @@ class ChatApp {
         this.state.micEnabled = !this.state.micEnabled;
         this.state.localStream.getAudioTracks().forEach(t => t.enabled = this.state.micEnabled);
         this.updateMicButton();
+      };
+    }
+
+    // Flip camera view button
+    if (this.elements.flipLocalVideoBtn) {
+      this.elements.flipLocalVideoBtn.onclick = () => {
+        if (this.elements.localVideo) {
+          this.elements.localVideo.classList.toggle('mirrored');
+          const isMirrored = this.elements.localVideo.classList.contains('mirrored');
+          this.elements.flipLocalVideoBtn.style.background = isMirrored ? '#ff6600' : 'rgba(0,0,0,0.6)';
+        }
       };
     }
 
