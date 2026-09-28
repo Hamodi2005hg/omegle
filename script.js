@@ -9,6 +9,7 @@ class ChatApp {
   constructor() {
     this.socket = null;
     this.pc = null;
+    this.iceCandidatesQueue = [];
 
     this.config = {
       SEARCH_TIMEOUT: 5000,
@@ -34,6 +35,7 @@ class ChatApp {
     this.searchTimer = null;
     this.pauseTimer = null;
     this.typingTimer = null;
+    this.searchPulseInterval = null;
 
     this.reportedIds = new Set();
     this.typing = false;
@@ -86,20 +88,25 @@ class ChatApp {
       });
 
       this.socket.on('connect', () => {
-        console.log('Socket.io connected:', this.socket.id);
+        console.log('[SOCKET] Connected to server. Socket ID:', this.socket.id);
         const fp = localStorage.getItem('user_fp') || this.socket.id;
         this.socket.emit('identify', { fingerprint: fp });
 
         if (this.state.partnerId) {
           this.socket.emit('reclaim-session', { oldSocketId: this.socket.id });
+        } else if (!this.state.isBanned && this.state.localStream) {
+          console.log('[SOCKET] Socket connected/reconnected while searching — starting search loop!');
+          this.startSearchLoop();
         }
       });
 
       this.socket.on('partner-found', (data) => {
+        console.log('[MATCHMAKING] Partner found:', data);
         this.handlePartnerFound(data);
       });
 
       this.socket.on('partner-disconnected', () => {
+        console.log('[MATCHMAKING] Partner disconnected.');
         this.handlePartnerDisconnected();
       });
 
@@ -213,6 +220,10 @@ class ChatApp {
   clearAllTimers() {
     this.timers.forEach(timerId => clearTimeout(timerId));
     this.timers.clear();
+    if (this.searchPulseInterval) {
+      clearInterval(this.searchPulseInterval);
+      this.searchPulseInterval = null;
+    }
   }
 
   // =====================================================
@@ -388,6 +399,7 @@ class ChatApp {
       } catch (e) {}
       this.pc = null;
     }
+    this.iceCandidatesQueue = [];
 
     if (this.elements.remoteVideo) {
       try {
@@ -430,6 +442,7 @@ class ChatApp {
       try { this.pc.close(); } catch(e){}
       this.pc = null;
     }
+    this.iceCandidatesQueue = [];
 
     const rtcConfig = {
       iceServers: [
@@ -451,6 +464,7 @@ class ChatApp {
     }
 
     this.pc.ontrack = (event) => {
+      console.log('[WEBRTC] Remote track received:', event.track.kind);
       if (this.sessionToken !== session) return;
       if (this.elements.remoteVideo && event.streams && event.streams[0]) {
         this.elements.remoteVideo.srcObject = event.streams[0];
@@ -470,11 +484,28 @@ class ChatApp {
       }
     };
 
+    this.pc.oniceconnectionstatechange = () => {
+      console.log('[WEBRTC] ICE connection state:', this.pc?.iceConnectionState);
+      if (this.pc?.iceConnectionState === 'failed') {
+        console.warn('[WEBRTC] ICE Connection Failed - Retrying...');
+        if (isInitiator) {
+          this.pc.createOffer({ iceRestart: true })
+            .then(offer => this.pc.setLocalDescription(offer))
+            .then(() => {
+              if (this.socket && this.state.partnerId === partnerId) {
+                this.socket.emit('signal', { to: partnerId, data: { sdp: this.pc.localDescription } });
+              }
+            }).catch(() => {});
+        }
+      }
+    };
+
     if (isInitiator) {
       this.pc.createOffer()
         .then(offer => this.pc.setLocalDescription(offer))
         .then(() => {
           if (this.socket && this.state.partnerId === partnerId) {
+            console.log('[WEBRTC] Sending Offer SDP to:', partnerId);
             this.socket.emit('signal', {
               to: partnerId,
               data: { sdp: this.pc.localDescription }
@@ -490,11 +521,22 @@ class ChatApp {
 
     try {
       if (data.sdp) {
+        console.log('[WEBRTC] Received SDP:', data.sdp.type);
         await this.pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+
+        if (this.iceCandidatesQueue.length > 0) {
+          console.log(`[WEBRTC] Applying ${this.iceCandidatesQueue.length} buffered ICE candidates...`);
+          for (const cand of this.iceCandidatesQueue) {
+            try { await this.pc.addIceCandidate(cand); } catch(e){}
+          }
+          this.iceCandidatesQueue = [];
+        }
+
         if (data.sdp.type === 'offer') {
           const answer = await this.pc.createAnswer();
           await this.pc.setLocalDescription(answer);
           if (this.socket && this.state.partnerId === from) {
+            console.log('[WEBRTC] Sending Answer SDP to:', from);
             this.socket.emit('signal', {
               to: from,
               data: { sdp: this.pc.localDescription }
@@ -502,7 +544,12 @@ class ChatApp {
           }
         }
       } else if (data.candidate) {
-        await this.pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        const candidate = new RTCIceCandidate(data.candidate);
+        if (this.pc.remoteDescription && this.pc.remoteDescription.type) {
+          await this.pc.addIceCandidate(candidate);
+        } else {
+          this.iceCandidatesQueue.push(candidate);
+        }
       }
     } catch(e) {
       console.warn("Signal error:", e);
@@ -543,13 +590,18 @@ class ChatApp {
     this.updateStatusMessage('Searching for a stranger...');
 
     const sendFindPartner = () => {
-      if (this.state.partnerId || this.state.isBanned || !this.socket) return;
+      if (this.state.partnerId || this.state.isBanned) return;
+      if (!this.socket || !this.socket.connected) {
+        console.warn('[SEARCH] Socket not connected yet. Waiting for connect event...');
+        return;
+      }
       const filterGender = (typeof window.getActiveGenderFilter === 'function') ? window.getActiveGenderFilter() : 'all';
       const user = (typeof window.getGoogleUser === 'function') ? window.getGoogleUser() : (JSON.parse(localStorage.getItem('google_user') || 'null'));
       const avatar = user?.picture || 'https://ui-avatars.com/api/?name=User&background=ff6600&color=fff';
       const name = user?.name || 'User';
       const gender = localStorage.getItem('user_gender') || 'male';
 
+      console.log('[SEARCH] Emitting find-partner event...');
       this.socket.emit('find-partner', {
         interests: [],
         gender,
@@ -561,6 +613,16 @@ class ChatApp {
     };
 
     sendFindPartner();
+
+    if (this.searchPulseInterval) clearInterval(this.searchPulseInterval);
+    this.searchPulseInterval = setInterval(() => {
+      if (!this.state.partnerId && !this.state.isBanned) {
+        sendFindPartner();
+      } else {
+        clearInterval(this.searchPulseInterval);
+        this.searchPulseInterval = null;
+      }
+    }, 1500);
 
     this.clearSafeTimer(this.searchTimer);
     this.clearSafeTimer(this.pauseTimer);
