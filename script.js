@@ -88,19 +88,22 @@ class ChatApp {
     if (window.joinRoom || (window.trystero && window.trystero.joinRoom)) {
       return true;
     }
-    return new Promise((resolve) => {
+    const loadScript = (url) => new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/trystero@0.22.0/dist/trystero-torrent.min.js';
+      script.src = url;
       script.onload = () => resolve(true);
-      script.onerror = () => {
-        const scriptFallback = document.createElement('script');
-        scriptFallback.src = 'https://unpkg.com/trystero@0.22.0/dist/trystero-torrent.min.js';
-        scriptFallback.onload = () => resolve(true);
-        scriptFallback.onerror = () => resolve(false);
-        document.head.appendChild(scriptFallback);
-      };
+      script.onerror = () => resolve(false);
       document.head.appendChild(script);
     });
+
+    let loaded = await loadScript('https://cdn.jsdelivr.net/npm/trystero@0.22.0/dist/trystero-nostr.min.js');
+    if (!loaded) {
+      loaded = await loadScript('https://unpkg.com/trystero@0.22.0/dist/trystero-nostr.min.js');
+    }
+    if (!loaded) {
+      loaded = await loadScript('https://cdn.jsdelivr.net/npm/trystero@0.22.0/dist/trystero-torrent.min.js');
+    }
+    return loaded;
   }
 
   getJoinRoomFn() {
@@ -111,7 +114,20 @@ class ChatApp {
 
   getRoomConfig() {
     return {
-      appId: this.appId,
+      appId: this.appId || 'omegooo_chat_v2',
+      relayUrls: [
+        'wss://relay.damus.io',
+        'wss://nos.lol',
+        'wss://relay.snort.social',
+        'wss://nostr.mom',
+        'wss://relay.nostr.band',
+        'wss://purplepag.es'
+      ],
+      trackerUrls: [
+        'wss://tracker.openwebtorrent.com',
+        'wss://tracker.btorrent.xyz',
+        'wss://tracker.files.fm:7072/announce'
+      ],
       rtcConfig: {
         iceServers: [
           { urls: 'stun:stun.l.google.com:19302' },
@@ -629,7 +645,11 @@ class ChatApp {
 
       getChat((data, peerId) => {
         if (this.sessionToken !== currentSession) return;
-        this.addMessage(data.message, 'them', '', data.avatar || this.state.partnerAvatar);
+        const msgText = typeof data === 'string' ? data : (data?.message || '');
+        const avatarUrl = typeof data === 'object' ? (data?.avatar || this.state.partnerAvatar) : this.state.partnerAvatar;
+        if (msgText) {
+          this.addMessage(msgText, 'them', '', avatarUrl);
+        }
       });
 
       getTyping(() => {
