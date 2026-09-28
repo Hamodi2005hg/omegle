@@ -1,15 +1,27 @@
 // =====================================================
-// Omegooo Chat Engine - Direct Socket.io WebRTC
-// High performance, instant matchmaking, 100% reliable
+// Omegooo Chat Engine - Cloudflare Pages Compatible
+// PeerJS + MQTT Real-time Signaling (Zero-Server-Cost P2P)
 // =====================================================
 
 const LINK_REGEX = /(?:https?:\/\/|ftp:\/\/|www\.)[^\s]+|(?:\b[a-zA-Z0-9-]+\.)+(?:com|net|org|edu|gov|io|ai|co|xyz|me|info|biz|ru|cn|uk|de|online|site|app|top|club|vip|live|tv|cc|ly|gg|link|click|space|shop|store|dev|pro|icu|buzz)\b(?:\/[^\s]*)?|(?:t\.me|wa\.me|discord\.gg|telegram\.me|bit\.ly|tinyurl\.com)\/[^\s]+/i;
 
+const STUN_SERVERS = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun2.l.google.com:19302' },
+  { urls: 'stun:stun3.l.google.com:19302' },
+  { urls: 'stun:stun4.l.google.com:19302' },
+  { urls: 'stun:global.stun.twilio.com:3478' }
+];
+
 class ChatApp {
   constructor() {
-    this.socket = null;
-    this.pc = null;
-    this.iceCandidatesQueue = [];
+    this.peer = null;
+    this.mqttClient = null;
+    this.currentCall = null;
+    this.dataConn = null;
+
+    this.myPeerId = 'omegooo_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now().toString(36);
 
     this.config = {
       SEARCH_TIMEOUT: 5000,
@@ -36,6 +48,7 @@ class ChatApp {
     this.pauseTimer = null;
     this.typingTimer = null;
     this.searchPulseInterval = null;
+    this.skippedPeerFallbackTimer = null;
 
     this.reportedIds = new Set();
     this.typing = false;
@@ -54,13 +67,15 @@ class ChatApp {
     this.updateMicButton();
     this.setupChatScrollEffect();
 
-    await this.initSocket();
+    await this.ensureLibrariesLoaded();
+    this.initPeerJS();
+    this.initMqttSignaling();
+
     this.startSearch();
     this.initNSFWJS();
   }
 
-  async ensureSocketIoLoaded() {
-    if (window.io) return true;
+  async ensureLibrariesLoaded() {
     const loadScript = (url) => new Promise((resolve) => {
       const script = document.createElement('script');
       script.src = url;
@@ -69,85 +84,239 @@ class ChatApp {
       document.head.appendChild(script);
     });
 
-    let loaded = await loadScript('/socket.io/socket.io.js');
-    if (!loaded) {
-      loaded = await loadScript('https://cdn.socket.io/4.7.5/socket.io.min.js');
+    if (!window.mqtt) {
+      await loadScript('https://cdn.jsdelivr.net/npm/mqtt@5.3.5/dist/mqtt.min.js');
     }
-    return loaded;
+    if (!window.Peer) {
+      await loadScript('https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js');
+    }
   }
 
-  async initSocket() {
-    await this.ensureSocketIoLoaded();
+  initPeerJS() {
+    if (!window.Peer) {
+      console.warn("PeerJS library not available. Retrying...");
+      setTimeout(() => this.initPeerJS(), 1000);
+      return;
+    }
 
-    if (window.io) {
-      this.socket = window.io({
-        transports: ['websocket', 'polling'],
-        reconnection: true,
-        reconnectionAttempts: Infinity,
-        reconnectionDelay: 1000
+    try {
+      this.peer = new window.Peer(this.myPeerId, {
+        config: { iceServers: STUN_SERVERS },
+        debug: 1
       });
 
-      this.socket.on('connect', () => {
-        console.log('[SOCKET] Connected to server. Socket ID:', this.socket.id);
-        const fp = localStorage.getItem('user_fp') || this.socket.id;
-        this.socket.emit('identify', { fingerprint: fp });
+      this.peer.on('open', (id) => {
+        console.log('[PEERJS] Connected to Peer Cloud. Peer ID:', id);
+      });
 
-        if (this.state.partnerId) {
-          this.socket.emit('reclaim-session', { oldSocketId: this.socket.id });
-        } else if (!this.state.isBanned && this.state.localStream) {
-          console.log('[SOCKET] Socket connected/reconnected while searching — starting search loop!');
-          this.startSearchLoop();
+      // Handle Incoming Call (Video Stream)
+      this.peer.on('call', (call) => {
+        console.log('[PEERJS] Incoming call from:', call.peer);
+        if (this.state.partnerId || this.state.isBanned) {
+          call.close();
+          return;
+        }
+
+        this.currentCall = call;
+        this.state.partnerId = call.peer;
+
+        if (this.state.localStream) {
+          call.answer(this.state.localStream);
+        } else {
+          call.answer();
+        }
+
+        call.on('stream', (remoteStream) => {
+          console.log('[PEERJS] Remote stream received from:', call.peer);
+          if (this.elements.remoteVideo) {
+            this.elements.remoteVideo.srcObject = remoteStream;
+            this.elements.remoteVideo.play().catch(() => {});
+          }
+          this.hideAllSpinners();
+          this.enableChat();
+          this.updateStatusMessage("Hello 👋 You've been contacted by a stranger Say hello 😊🤝");
+        });
+
+        call.on('close', () => {
+          this.handlePartnerDisconnected();
+        });
+
+        call.on('error', (err) => {
+          console.warn('[PEERJS] Call error:', err);
+          this.handlePartnerDisconnected();
+        });
+      });
+
+      // Handle Incoming Data Connection (Chat / Typing / Skip signals)
+      this.peer.on('connection', (conn) => {
+        console.log('[PEERJS] Incoming data connection from:', conn.peer);
+        if (this.dataConn) {
+          try { conn.close(); } catch(e){}
+        }
+        this.dataConn = conn;
+        this.setupDataConnection(conn);
+      });
+
+      this.peer.on('error', (err) => {
+        console.warn('[PEERJS] Peer error:', err);
+      });
+    } catch (e) {
+      console.error('[PEERJS] Initialization failed:', e);
+    }
+  }
+
+  initMqttSignaling() {
+    if (!window.mqtt) {
+      setTimeout(() => this.initMqttSignaling(), 1000);
+      return;
+    }
+
+    const brokerUrls = [
+      'wss://broker.emqx.io:8084/mqtt',
+      'wss://broker.hivemq.com:8000/mqtt'
+    ];
+
+    try {
+      this.mqttClient = window.mqtt.connect(brokerUrls[0], {
+        clientId: 'cli_' + this.myPeerId,
+        keepalive: 10,
+        clean: true,
+        reconnectPeriod: 2000
+      });
+
+      this.mqttClient.on('connect', () => {
+        console.log('[MQTT] Connected to signaling broker!');
+        this.mqttClient.subscribe('omegooo/lobby/v2');
+      });
+
+      this.mqttClient.on('message', (topic, message) => {
+        if (topic === 'omegooo/lobby/v2') {
+          try {
+            const data = JSON.parse(message.toString());
+            this.handleLobbyAnnounce(data);
+          } catch(e) {}
         }
       });
 
-      this.socket.on('partner-found', (data) => {
-        console.log('[MATCHMAKING] Partner found:', data);
-        this.handlePartnerFound(data);
+      this.mqttClient.on('error', (err) => {
+        console.warn('[MQTT] Signaling broker error, trying fallback...', err);
+        try {
+          this.mqttClient.end();
+          this.mqttClient = window.mqtt.connect(brokerUrls[1], {
+            clientId: 'cli_fb_' + this.myPeerId,
+            keepalive: 10,
+            clean: true,
+            reconnectPeriod: 2000
+          });
+          this.mqttClient.subscribe('omegooo/lobby/v2');
+        } catch(e) {}
       });
+    } catch (e) {
+      console.error('[MQTT] Connection failed:', e);
+    }
+  }
 
-      this.socket.on('partner-disconnected', () => {
-        console.log('[MATCHMAKING] Partner disconnected.');
-        this.handlePartnerDisconnected();
-      });
+  setupDataConnection(conn) {
+    conn.on('open', () => {
+      console.log('[DATA] Data connection opened with:', conn.peer);
+    });
 
-      this.socket.on('signal', (data) => {
-        this.handleSignal(data);
-      });
-
-      this.socket.on('chat-message', (data) => {
+    conn.on('data', (data) => {
+      if (!data) return;
+      if (data.type === 'chat') {
         this.addMessage(data.message, 'them', '', data.avatar || this.state.partnerAvatar);
-      });
-
-      this.socket.on('typing', () => {
+      } else if (data.type === 'typing') {
         if (this.typingIndicator) {
           this.typingIndicator.style.display = 'block';
           if (this.elements.chatMessages) this.elements.chatMessages.scrollTop = this.elements.chatMessages.scrollHeight;
         }
-      });
-
-      this.socket.on('stop-typing', () => {
+      } else if (data.type === 'stop-typing') {
         if (this.typingIndicator) {
           this.typingIndicator.style.display = 'none';
         }
-      });
+      } else if (data.type === 'skip') {
+        this.handlePartnerDisconnected();
+      } else if (data.type === 'report') {
+        this.handlePartnerDisconnected();
+      }
+    });
 
-      this.socket.on('banned', (data) => {
-        this.state.isBanned = true;
-        this.showBanModal({
-          title: data.title || 'Account Suspended',
-          message: data.message || 'You have been temporarily suspended due to policy violations.',
-          offenseCount: data.offenseCount || 1,
-          banDurationHours: data.banDurationHours || 24
-        });
-        this.cleanupConnection();
-        this.disableChat();
-      });
+    conn.on('close', () => {
+      this.handlePartnerDisconnected();
+    });
 
-      this.socket.on('chat-warning', (data) => {
-        if (data && data.message) {
-          this.addMessage(data.message, 'system');
+    conn.on('error', () => {
+      this.handlePartnerDisconnected();
+    });
+  }
+
+  handleLobbyAnnounce(data) {
+    if (!data || !data.peerId || data.peerId === this.myPeerId) return;
+    if (this.state.partnerId || this.state.isBanned || this.state.isOfferOpen) return;
+    if (this.reportedIds.has(data.peerId)) return;
+
+    const myFilterGender = (typeof window.getActiveGenderFilter === 'function') ? window.getActiveGenderFilter() : 'all';
+    const myGender = localStorage.getItem('user_gender') || 'male';
+
+    if (myFilterGender !== 'all' && data.gender !== myFilterGender) return;
+    if (data.filterGender && data.filterGender !== 'all' && myGender !== data.filterGender) return;
+
+    const isRecentlySkipped = (data.peerId === this.state.lastSkippedPeerId) && (Date.now() - (this.state.skipTimestamp || 0) < 10000);
+
+    const performConnect = () => {
+      if (this.state.partnerId || this.state.isBanned || this.state.isOfferOpen) return;
+      if (!this.peer) return;
+
+      // Deterministic caller selection: smaller peer ID initiates the call
+      if (this.myPeerId < data.peerId) {
+        console.log('[MATCHMAKING] Calling peer:', data.peerId);
+        this.state.partnerId = data.peerId;
+        this.state.isInitiator = true;
+        this.state.partnerAvatar = data.avatar || 'https://ui-avatars.com/api/?name=Stranger&background=ff6600&color=fff';
+        this.state.partnerName = data.name || 'Stranger';
+
+        this.setSingleSystemMessage('Connected with a stranger. Say hello! 👋😊', 'stranger-connected-msg');
+        this.updateStatusMessage("Hello 👋 You've been contacted by a stranger Say hello 😊🤝");
+
+        // Initiate PeerJS Video Call
+        if (this.state.localStream) {
+          this.currentCall = this.peer.call(data.peerId, this.state.localStream);
+        } else {
+          this.currentCall = this.peer.call(data.peerId);
         }
-      });
+
+        if (this.currentCall) {
+          this.currentCall.on('stream', (remoteStream) => {
+            if (this.elements.remoteVideo) {
+              this.elements.remoteVideo.srcObject = remoteStream;
+              this.elements.remoteVideo.play().catch(() => {});
+            }
+            this.hideAllSpinners();
+            this.enableChat();
+            this.updateStatusMessage("Hello 👋 You've been contacted by a stranger Say hello 😊🤝");
+          });
+
+          this.currentCall.on('close', () => {
+            this.handlePartnerDisconnected();
+          });
+        }
+
+        // Initiate PeerJS Data Connection for Chat
+        this.dataConn = this.peer.connect(data.peerId);
+        if (this.dataConn) {
+          this.setupDataConnection(this.dataConn);
+        }
+      }
+    };
+
+    if (isRecentlySkipped) {
+      this.clearSafeTimer(this.skippedPeerFallbackTimer);
+      this.skippedPeerFallbackTimer = this.setSafeTimer(() => {
+        performConnect();
+      }, 1000);
+    } else {
+      this.clearSafeTimer(this.skippedPeerFallbackTimer);
+      performConnect();
     }
   }
 
@@ -391,15 +560,15 @@ class ChatApp {
     this.sessionToken++;
     this.clearAllTimers();
 
-    if (this.pc) {
-      try {
-        this.pc.ontrack = null;
-        this.pc.onicecandidate = null;
-        this.pc.close();
-      } catch (e) {}
-      this.pc = null;
+    if (this.currentCall) {
+      try { this.currentCall.close(); } catch (e) {}
+      this.currentCall = null;
     }
-    this.iceCandidatesQueue = [];
+
+    if (this.dataConn) {
+      try { this.dataConn.close(); } catch (e) {}
+      this.dataConn = null;
+    }
 
     if (this.elements.remoteVideo) {
       try {
@@ -414,146 +583,6 @@ class ChatApp {
 
     this.state.partnerId = null;
     this.state.isInitiator = false;
-  }
-
-  // =====================================================
-  // WebRTC Matchmaking & Signaling
-  // =====================================================
-  handlePartnerFound(data) {
-    this.sessionToken++;
-    const currentSession = this.sessionToken;
-
-    this.clearAllTimers();
-    this.state.partnerId = data.id;
-    this.state.isInitiator = data.initiator;
-    this.state.partnerAvatar = data.partnerAvatar || 'https://ui-avatars.com/api/?name=Stranger&background=ff6600&color=fff';
-    this.state.partnerName = data.partnerName || 'Stranger';
-
-    this.hideAllSpinners();
-    this.setSingleSystemMessage('Connected with a stranger. Say hello! 👋😊', 'stranger-connected-msg');
-    this.updateStatusMessage("Hello 👋 You've been contacted by a stranger Say hello 😊🤝");
-    this.enableChat();
-
-    this.initPeerConnection(data.id, data.initiator, currentSession);
-  }
-
-  initPeerConnection(partnerId, isInitiator, session) {
-    if (this.pc) {
-      try { this.pc.close(); } catch(e){}
-      this.pc = null;
-    }
-    this.iceCandidatesQueue = [];
-
-    const rtcConfig = {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' },
-        { urls: 'stun:stun3.l.google.com:19302' },
-        { urls: 'stun:stun4.l.google.com:19302' },
-        { urls: 'stun:global.stun.twilio.com:3478' }
-      ]
-    };
-
-    this.pc = new RTCPeerConnection(rtcConfig);
-
-    if (this.state.localStream) {
-      this.state.localStream.getTracks().forEach(track => {
-        try { this.pc.addTrack(track, this.state.localStream); } catch(e){}
-      });
-    }
-
-    this.pc.ontrack = (event) => {
-      console.log('[WEBRTC] Remote track received:', event.track.kind);
-      if (this.sessionToken !== session) return;
-      if (this.elements.remoteVideo && event.streams && event.streams[0]) {
-        this.elements.remoteVideo.srcObject = event.streams[0];
-        this.elements.remoteVideo.play().catch(() => {});
-      }
-      this.hideAllSpinners();
-      this.enableChat();
-      this.updateStatusMessage("Hello 👋 You've been contacted by a stranger Say hello 😊🤝");
-    };
-
-    this.pc.onicecandidate = (event) => {
-      if (event.candidate && this.socket && this.state.partnerId === partnerId) {
-        this.socket.emit('signal', {
-          to: partnerId,
-          data: { candidate: event.candidate }
-        });
-      }
-    };
-
-    this.pc.oniceconnectionstatechange = () => {
-      console.log('[WEBRTC] ICE connection state:', this.pc?.iceConnectionState);
-      if (this.pc?.iceConnectionState === 'failed') {
-        console.warn('[WEBRTC] ICE Connection Failed - Retrying...');
-        if (isInitiator) {
-          this.pc.createOffer({ iceRestart: true })
-            .then(offer => this.pc.setLocalDescription(offer))
-            .then(() => {
-              if (this.socket && this.state.partnerId === partnerId) {
-                this.socket.emit('signal', { to: partnerId, data: { sdp: this.pc.localDescription } });
-              }
-            }).catch(() => {});
-        }
-      }
-    };
-
-    if (isInitiator) {
-      this.pc.createOffer()
-        .then(offer => this.pc.setLocalDescription(offer))
-        .then(() => {
-          if (this.socket && this.state.partnerId === partnerId) {
-            console.log('[WEBRTC] Sending Offer SDP to:', partnerId);
-            this.socket.emit('signal', {
-              to: partnerId,
-              data: { sdp: this.pc.localDescription }
-            });
-          }
-        })
-        .catch(err => console.error("Create offer error:", err));
-    }
-  }
-
-  async handleSignal({ from, data }) {
-    if (!this.pc || from !== this.state.partnerId) return;
-
-    try {
-      if (data.sdp) {
-        console.log('[WEBRTC] Received SDP:', data.sdp.type);
-        await this.pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-
-        if (this.iceCandidatesQueue.length > 0) {
-          console.log(`[WEBRTC] Applying ${this.iceCandidatesQueue.length} buffered ICE candidates...`);
-          for (const cand of this.iceCandidatesQueue) {
-            try { await this.pc.addIceCandidate(cand); } catch(e){}
-          }
-          this.iceCandidatesQueue = [];
-        }
-
-        if (data.sdp.type === 'offer') {
-          const answer = await this.pc.createAnswer();
-          await this.pc.setLocalDescription(answer);
-          if (this.socket && this.state.partnerId === from) {
-            console.log('[WEBRTC] Sending Answer SDP to:', from);
-            this.socket.emit('signal', {
-              to: from,
-              data: { sdp: this.pc.localDescription }
-            });
-          }
-        }
-      } else if (data.candidate) {
-        const candidate = new RTCIceCandidate(data.candidate);
-        if (this.pc.remoteDescription && this.pc.remoteDescription.type) {
-          await this.pc.addIceCandidate(candidate);
-        } else {
-          this.iceCandidatesQueue.push(candidate);
-        }
-      }
-    } catch(e) {
-      console.warn("Signal error:", e);
-    }
   }
 
   handlePartnerDisconnected() {
@@ -589,40 +618,41 @@ class ChatApp {
     this.showRemoteSpinnerOnly(true);
     this.updateStatusMessage('Searching for a stranger...');
 
-    const sendFindPartner = () => {
+    const sendAnnouncePulse = () => {
       if (this.state.partnerId || this.state.isBanned) return;
-      if (!this.socket || !this.socket.connected) {
-        console.warn('[SEARCH] Socket not connected yet. Waiting for connect event...');
-        return;
-      }
+      if (!this.mqttClient || !this.mqttClient.connected) return;
+
       const filterGender = (typeof window.getActiveGenderFilter === 'function') ? window.getActiveGenderFilter() : 'all';
       const user = (typeof window.getGoogleUser === 'function') ? window.getGoogleUser() : (JSON.parse(localStorage.getItem('google_user') || 'null'));
       const avatar = user?.picture || 'https://ui-avatars.com/api/?name=User&background=ff6600&color=fff';
       const name = user?.name || 'User';
       const gender = localStorage.getItem('user_gender') || 'male';
 
-      console.log('[SEARCH] Emitting find-partner event...');
-      this.socket.emit('find-partner', {
-        interests: [],
+      const payload = {
+        peerId: this.myPeerId,
         gender,
         filterGender,
         avatar,
         name,
-        user
-      });
+        ts: Date.now()
+      };
+
+      try {
+        this.mqttClient.publish('omegooo/lobby/v2', JSON.stringify(payload));
+      } catch(e) {}
     };
 
-    sendFindPartner();
+    sendAnnouncePulse();
 
     if (this.searchPulseInterval) clearInterval(this.searchPulseInterval);
     this.searchPulseInterval = setInterval(() => {
       if (!this.state.partnerId && !this.state.isBanned) {
-        sendFindPartner();
+        sendAnnouncePulse();
       } else {
         clearInterval(this.searchPulseInterval);
         this.searchPulseInterval = null;
       }
-    }, 1500);
+    }, 1200);
 
     this.clearSafeTimer(this.searchTimer);
     this.clearSafeTimer(this.pauseTimer);
@@ -826,8 +856,8 @@ class ChatApp {
         this.state.skipTimestamp = Date.now();
       }
 
-      if (this.socket) {
-        try { this.socket.emit('skip'); } catch (e) {}
+      if (this.dataConn) {
+        try { this.dataConn.send({ type: 'skip' }); } catch(e){}
       }
 
       this.disableChat();
@@ -849,8 +879,8 @@ class ChatApp {
     // Exit button
     if (this.elements.exitBtn) {
       this.elements.exitBtn.onclick = () => {
-        if (this.socket) {
-          try { this.socket.emit('stop'); } catch (e) {}
+        if (this.dataConn) {
+          try { this.dataConn.send({ type: 'skip' }); } catch(e){}
         }
         this.cleanupConnection();
         if (this.state.localStream) {
@@ -879,10 +909,9 @@ class ChatApp {
           return;
         }
 
-        if (this.socket) {
+        if (this.dataConn) {
           try {
-            this.socket.emit('report', { partnerId: this.state.partnerId, reason: 'reported_by_user' });
-            this.socket.emit('skip');
+            this.dataConn.send({ type: 'report' });
           } catch (e) {}
         }
 
@@ -908,16 +937,16 @@ class ChatApp {
     }
 
     const sendTyping = () => {
-      if (!this.state.partnerId || this.state.isBanned || !this.socket) return;
+      if (!this.state.partnerId || this.state.isBanned || !this.dataConn) return;
       if (!this.typing) {
         this.typing = true;
-        this.socket.emit('typing', { to: this.state.partnerId });
+        try { this.dataConn.send({ type: 'typing' }); } catch(e){}
       }
       this.clearSafeTimer(this.typingTimer);
       this.typingTimer = this.setSafeTimer(() => {
         this.typing = false;
-        if (this.socket && this.state.partnerId) {
-          this.socket.emit('stop-typing', { to: this.state.partnerId });
+        if (this.dataConn) {
+          try { this.dataConn.send({ type: 'stop-typing' }); } catch(e){}
         }
       }, this.config.TYPING_PAUSE);
     };
@@ -931,13 +960,15 @@ class ChatApp {
     const sendMessage = () => {
       if (this.state.isBanned) return;
       const msg = this.elements.chatInput.value.trim();
-      if (!msg || !this.state.partnerId || !this.socket) return;
+      if (!msg || !this.state.partnerId || !this.dataConn) return;
 
       if (LINK_REGEX.test(msg)) {
         this.addMessage("🚫 Sending links or external URLs is prohibited in chat.", "system");
         this.elements.chatInput.value = '';
         this.typing = false;
-        if (this.socket) this.socket.emit('stop-typing', { to: this.state.partnerId });
+        if (this.dataConn) {
+          try { this.dataConn.send({ type: 'stop-typing' }); } catch(e){}
+        }
         return;
       }
 
@@ -945,16 +976,18 @@ class ChatApp {
       const myAvatar = user?.picture || localStorage.getItem('user_avatar') || 'https://ui-avatars.com/api/?name=Me&background=ff6600&color=fff';
       this.addMessage(msg, 'you', '', myAvatar);
 
-      this.socket.emit('chat-message', {
-        to: this.state.partnerId,
-        message: msg,
-        avatar: myAvatar,
-        name: user?.name || 'Me'
-      });
+      try {
+        this.dataConn.send({
+          type: 'chat',
+          message: msg,
+          avatar: myAvatar,
+          name: user?.name || 'Me'
+        });
+      } catch(e) {}
 
       this.elements.chatInput.value = '';
       this.typing = false;
-      this.socket.emit('stop-typing', { to: this.state.partnerId });
+      try { this.dataConn.send({ type: 'stop-typing' }); } catch(e){}
     };
 
     if (this.elements.sendBtn) this.elements.sendBtn.onclick = sendMessage;
@@ -1026,10 +1059,6 @@ class ChatApp {
             }
           });
 
-          if (this.socket) {
-            this.socket.emit('nsfw-log', { details });
-          }
-
           if (pornOrSexyProb >= 0.75 || (details.Porn && details.Porn >= 0.65)) {
             console.warn("NSFW violation detected (>75%):", pornOrSexyProb, details);
             this.handleNSFWViolation({ probability: pornOrSexyProb, details });
@@ -1042,10 +1071,6 @@ class ChatApp {
   handleNSFWViolation(details = {}) {
     if (this.state.isBanned) return;
     this.state.isBanned = true;
-
-    if (this.socket) {
-      this.socket.emit('nsfw-violation', details);
-    }
 
     this.showBanModal({
       title: 'Account Suspended',
